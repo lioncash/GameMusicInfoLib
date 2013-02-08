@@ -150,6 +150,90 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
+		/// Returns true if the module has packed patterns
+		/// </summary>
+		public bool HasPackedPatterns
+		{
+			get
+			{   
+				// Seek 118 bytes in
+				mtt.Seek(0x76, SeekOrigin.Begin);
+				// Read the flag byte
+				byte flags = (byte) mtt.ReadByte();
+
+				// If bit 0 is set then we have packed patterns
+				if ((flags & 1) != 0)
+					return true;
+					
+				// Bit not set, no packed patterns
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Returns true if the module has automation
+		/// </summary>
+		public bool HasAutomation
+		{
+			get
+			{
+				// Seek 118 bytes in
+				mtt.Seek(0x76, SeekOrigin.Begin);
+				// Read the flag byte
+				byte flags = (byte)mtt.ReadByte();
+
+				// If bit 1 is set then we have packed patterns
+				if ((flags & 2) != 0)
+					return true;
+
+				// Bit not set, no automation
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Returns true if the module has drum automation
+		/// </summary>
+		public bool HasDrumAutomation
+		{
+			get
+			{
+				// Seek 118 bytes in
+				mtt.Seek(0x76, SeekOrigin.Begin);
+				// Read the flag byte
+				byte flags = (byte)mtt.ReadByte();
+
+				// If bit 3 is set then we have drum automation
+				if ((flags & 8) != 0)
+					return true;
+
+				// Bit not set, no drum automation
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Returns true if the module has master automation
+		/// </summary>
+		public bool HasMasterAutomation
+		{
+			get
+			{
+				// Seek 118 bytes in
+				mtt.Seek(0x76, SeekOrigin.Begin);
+				// Read the flag byte
+				byte flags = (byte)mtt.ReadByte();
+
+				// If bit 4 is set then we have drum automation
+				if ((flags & 16) != 0)
+					return true;
+
+				// Bit not set, no drum automation
+				return false;
+			}
+		}
+
+		/// <summary>
 		/// The total amount of instruments present in the MT2 file
 		/// </summary>
 		public int TotalInstruments
@@ -282,3 +366,4 @@ namespace GameMusicInfoReader.Modules
 		}
 	}
 }
+

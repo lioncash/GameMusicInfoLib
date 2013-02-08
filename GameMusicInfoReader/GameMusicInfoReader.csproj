@@ -44,6 +44,7 @@
     <Compile Include="Modules\S3MReader.cs" />
     <Compile Include="Modules\SixSixNineReader.cs" />
     <Compile Include="Modules\StmReader.cs" />
+    <Compile Include="Modules\XMReader.cs" />
     <Compile Include="NsfReader.cs" />
     <Compile Include="PsfReader.cs" />
     <Compile Include="SapReader.cs" />
