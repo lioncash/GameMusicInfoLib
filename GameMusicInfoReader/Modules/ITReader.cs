@@ -3,7 +3,9 @@ using System.Text;
 
 namespace GameMusicInfoReader.Modules
 {
-	// TODO: Individual instrument info.
+	// TODO: Possibly more sample reading.
+	// TODO: Possible cleanup. (ie, breaking sample methods and pattern methods into their own class).
+
 
 	/// <summary>
 	/// A reader for Impulse Tracker modules
@@ -808,8 +810,11 @@ namespace GameMusicInfoReader.Modules
 		// Sample Header Reading //
 		///////////////////////////
 		
+		// Length of the header of each sample.
+		private const int SampleHeaderLength = 80;
+
 		// Offset to the sample headers
-		private int SampleHeaderOffset
+		public int SampleHeaderOffset
 		{
 			get
 			{
@@ -822,6 +827,316 @@ namespace GameMusicInfoReader.Modules
 			}
 		}
 
-		// TODO: Sample reading, Pattern reading
+		/// <summary>
+		/// The global volume of the sample. (Ranges from 0-64)
+		/// </summary>
+		/// <param name="sample">The sample to get the global volume of.</param>
+		/// <returns>The global volume of the specified sample.</returns>
+		/// <remarks>
+		/// This method is ZERO-BASED. ie) Sample 1 = SampleGlobalVolume(0)
+		/// </remarks>
+		public int SampleGlobalVolume(int sample)
+		{
+			int sampleOffset = SampleHeaderOffset;
+			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
+
+			// Seek to global volume byte of the sample.
+			it.Seek(sampleNum + 0x11, SeekOrigin.Begin);
+			return it.ReadByte();
+		}
+
+		/// <summary>
+		/// Checks if the given sample is 16-bit 
+		/// </summary>
+		/// <param name="sample">The sample to check</param>
+		/// <returns>
+		/// True if the sample is 16-bit. <para/>
+		/// False if the sample is 8-bit
+		/// </returns>
+		/// <remarks>
+		/// This method is ZERO-BASED. ie) Sample 1 = Is16Bit(0)
+		/// </remarks>
+		public bool Is16Bit(int sample)
+		{
+			int sampleOffset = SampleHeaderOffset;
+			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
+
+			// Seek to flags byte of the sample.
+			it.Seek(sampleNum + 0x12, SeekOrigin.Begin);
+			
+			// If bit 1 is set, the sample is 16-bit 
+			return (it.ReadByte() & 2) != 0;
+		}
+
+		/// <summary>
+		/// Checks if the given sample is compressed
+		/// </summary>
+		/// <param name="sample">The sample to check.</param>
+		/// <returns>
+		/// True, if the sample is compressed. <para/>
+		/// False, if the sample is not.
+		/// </returns>
+		public bool IsACompressedSample(int sample)
+		{
+			int sampleOffset = SampleHeaderOffset;
+			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
+
+			// Seek to flags byte of the sample.
+			it.Seek(sampleNum + 0x12, SeekOrigin.Begin);
+
+			// If bit 3 is set, the sample is compressed 
+			return (it.ReadByte() & 8) != 0;
+		}
+
+		/// <summary>
+		/// Checks if the given sample is looped
+		/// </summary>
+		/// <param name="sample">The sample to check.</param>
+		/// <returns>
+		/// True, if the sample is looped. <para/>
+		/// False, if the sample is not.
+		/// </returns>
+		/// <remarks>
+		/// This method is ZERO-BASED. ie) Sample 1 = IsLooped(0)
+		/// </remarks>
+		public bool IsLooped(int sample)
+		{
+			int sampleOffset = SampleHeaderOffset;
+			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
+
+			// Seek to flags byte of the sample.
+			it.Seek(sampleNum + 0x12, SeekOrigin.Begin);
+
+			// If bit 4 is set, the sample is looped
+			return (it.ReadByte() & 16) != 0;
+		}
+
+		/// <summary>
+		/// Checks if the given sample has a sustain loop
+		/// </summary>
+		/// <param name="sample">The sample to check.</param>
+		/// <returns>
+		/// True, if the sample uses a sustain loop. <para/>
+		/// False, if the sample does not.
+		/// </returns>
+		/// <remarks>
+		/// This method is ZERO-BASED. ie) Sample 1 = SustainIsLooped(0)
+		/// </remarks>
+		public bool SustainIsLooped(int sample)
+		{
+			int sampleOffset = SampleHeaderOffset;
+			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
+
+			// Seek to flags byte of the sample.
+			it.Seek(sampleNum + 0x12, SeekOrigin.Begin);
+
+			// If bit 5 is set, the sample has a sustain loop
+			return (it.ReadByte() & 32) != 0;
+		}
+
+		/// <summary>
+		/// Checks if the sample uses a ping-pong loop
+		/// </summary>
+		/// <param name="sample">The sample to check</param>
+		/// <returns>
+		/// True = Uses a ping-pong loop <para/>
+		/// False = Uses a forward loop
+		/// </returns>
+		/// <remarks>
+		/// This method is ZERO-BASED. ie) Sample 1 = UsesPingPongLoop(0)
+		/// </remarks>
+		public bool UsesPingPongLoop(int sample)
+		{
+			int sampleOffset = SampleHeaderOffset;
+			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
+
+			// Seek to flags byte of the sample.
+			it.Seek(sampleNum + 0x12, SeekOrigin.Begin);
+
+			// If bit 6 is set, the sample has a ping-pong loop
+			return (it.ReadByte() & 64) != 0;
+		}
+
+		/// <summary>
+		/// Checks if the sample uses a ping-pong sustain loop
+		/// </summary>
+		/// <param name="sample">The sample to check</param>
+		/// <returns>
+		/// True = Uses a ping-pong sustain loop <para/>
+		/// False = Uses a forward sustain loop
+		/// </returns>
+		/// <remarks>
+		/// This method is ZERO-BASED. ie) Sample 1 = UsesPingPongSustainLoop(0)
+		/// </remarks>
+		public bool UsesPingPongSustainLoop(int sample)
+		{
+			int sampleOffset = SampleHeaderOffset;
+			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
+
+			// Seek to flags byte of the sample.
+			it.Seek(sampleNum + 0x12, SeekOrigin.Begin);
+
+			// If bit 7 is set, the sample has a ping-pong sustain loop
+			return (it.ReadByte() & 128) != 0;
+		}
+
+		/// <summary>
+		/// The default volume of the given sample
+		/// </summary>
+		/// <param name="sample">The sample to get the default volume of.</param>
+		/// <returns>The default volume of the sample.</returns>
+		/// <remarks>
+		/// This method is ZERO-BASED. ie) Sample 1 = DefaultVolume(0)
+		/// </remarks>
+		public int DefaultVolume(int sample)
+		{
+			int sampleOffset = SampleHeaderOffset;
+			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
+
+			// Seek to default vol byte of the sample.
+			it.Seek(sampleNum + 0x13, SeekOrigin.Begin);
+			return it.ReadByte();
+		}
+
+		/// <summary>
+		/// The length of the sample in number of samples to process
+		/// </summary>
+		/// <param name="sample">The sample to get the length of.</param>
+		/// <returns>The length of a sample in no. of samples.</returns>
+		/// /// <remarks>
+		/// This method is ZERO-BASED. ie) Sample 1 = LengthInSamples(0)
+		/// </remarks>
+		public int LengthInSamples(int sample)
+		{
+			int sampleOffset = SampleHeaderOffset;
+			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
+
+			// Seek to default vol byte of the sample.
+			br.BaseStream.Seek(sampleNum + 0x30, SeekOrigin.Begin);
+			return br.ReadInt32();
+		}
+
+		/// <summary>
+		/// The name of the given sample (if it has one).
+		/// </summary>
+		/// <param name="sample">The sample to get the name of.</param>
+		/// <returns>The name of the sample</returns>
+		/// <remarks>
+		/// This method is ZERO-BASED. ie) Sample 1 = SampleName(0)
+		/// </remarks>
+		public string SampleName(int sample)
+		{
+			int sampleOffset = SampleHeaderOffset;
+			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
+			byte[] sampleName = new byte[26];
+
+			// Seek to name of the sample.
+			it.Seek(sampleNum + 0x14, SeekOrigin.Begin);
+			// Read sample name
+			it.Read(sampleName, 0, 26);
+
+			// Convert bytes to string
+			UTF8Encoding encoding = new UTF8Encoding();
+			return encoding.GetString(sampleName);
+		}
+
+		/// <summary>
+		/// Checks if the samples of a sample are signed.
+		/// </summary>
+		/// <param name="sample">The sample to check the samples of.</param>
+		/// <returns>
+		/// True = Samples are signed. <para/>
+		/// False = Samples are unsigned
+		/// </returns>
+		/// <remarks>
+		/// This method is ZERO-BASED. ie) Sample 1 = SamplesAreSigned(0)
+		/// </remarks>
+		public bool SamplesAreSigned(int sample)
+		{
+			int sampleOffset = SampleHeaderOffset;
+			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
+
+			// Seek to vibrato speed of the sample.
+			it.Seek(sampleNum + 0x2E, SeekOrigin.Begin);
+			return (it.ReadByte() & 1) != 0;
+		}
+
+		/// <summary>
+		/// The vibrato speed of the sample (ranges from 0-64)
+		/// </summary>
+		/// <param name="sample">The sample to get the vibrato speed of.</param>
+		/// <returns>The vibrato speed of the sample</returns>
+		/// <remarks>
+		/// This method is ZERO-BASED. ie) Sample 1 = VibratoSpeed(0)
+		/// </remarks>
+		public int VibratoSpeed(int sample)
+		{
+			int sampleOffset = SampleHeaderOffset;
+			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
+
+			// Seek to vibrato speed of the sample.
+			it.Seek(sampleNum + 0x4C, SeekOrigin.Begin);
+			return it.ReadByte();
+		}
+
+		/// <summary>
+		/// The vibrato depth of the sample (ranges from 0-64)
+		/// </summary>
+		/// <param name="sample">The sample to get the vibrato depth of.</param>
+		/// <returns>The vibrato depth of the sample</returns>
+		/// <remarks>
+		/// This method is ZERO-BASED. ie) Sample 1 = VibratoDepth(0)
+		/// </remarks>
+		public int VibratoDepth(int sample)
+		{
+			int sampleOffset = SampleHeaderOffset;
+			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
+
+			// Seek to the vibrato depth of the sample.
+			it.Seek(sampleNum + 0x4D, SeekOrigin.Begin);
+			return it.ReadByte();
+		}
+
+		/// <summary>
+		/// The vibrato waveform type of the sample.
+		/// </summary>
+		/// <param name="sample">The sample to get the vibrato waveform type from.</param>
+		/// <returns>
+		/// The vibrato waveform of the sample. <para/>
+		/// 0 = Sine wave <para/>
+		/// 1 = Ramp down <para/>
+		/// 2 = Square wave <para/>
+		/// 3 = Random (speed is irrelevant) <para/>
+		/// </returns>
+		/// <remarks>
+		/// This method is ZERO-BASED. ie) Sample 1 = VibratoWaveformType(0)
+		/// </remarks>
+		public int VibratoWaveformType(int sample)
+		{
+			int sampleOffset = SampleHeaderOffset;
+			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
+
+			// Seek to name of the sample.
+			it.Seek(sampleNum + 0x4E, SeekOrigin.Begin);
+			return it.ReadByte();
+		}
+
+		/// <summary>
+		/// The vibrato rate of the sample.
+		/// </summary>
+		/// <param name="sample">The sample to get the vibrato rate from.</param>
+		/// <returns> The vibrato rate of the sample. </returns>
+		/// <remarks>
+		/// This method is ZERO-BASED. ie) Sample 1 = VibratoRate(0)
+		/// </remarks>
+		public int VibratoRate(int sample)
+		{
+			int sampleOffset = SampleHeaderOffset;
+			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
+
+			// Seek to vibrato rate of the sample.
+			it.Seek(sampleNum + 0x4E, SeekOrigin.Begin);
+			return it.ReadByte();
+		}
 	}
 }
