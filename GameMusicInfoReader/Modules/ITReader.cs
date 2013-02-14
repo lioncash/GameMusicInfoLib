@@ -814,7 +814,7 @@ namespace GameMusicInfoReader.Modules
 		private const int SampleHeaderLength = 80;
 
 		// Offset to the sample headers
-		public int SampleHeaderOffset
+		private int SampleHeaderOffset
 		{
 			get
 			{
