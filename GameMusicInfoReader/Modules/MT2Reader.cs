@@ -23,8 +23,7 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// The name of the tracker that the module
-		/// was created in.
+		/// The name of the tracker that the module was created in.
 		/// </summary>
 		public string TrackerName
 		{
