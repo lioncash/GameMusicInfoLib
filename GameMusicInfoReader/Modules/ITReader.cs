@@ -606,7 +606,7 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="instrument">The instrument to get the duplicate check type information from.</param>
 		/// <returns>
-		/// -1 = Trying to pass a non-existant instrument <para/>
+		/// -1 = Trying to pass a non-existent instrument <para/>
 		/// 0 = Off <para/>
 		/// 1 = Note <para/>
 		/// 2 = Sample <para/>
@@ -635,7 +635,7 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="instrument">The instrument to get the DCA value from</param>
 		/// <returns>
-		/// -1 = Trying to pass a non-existant instrument <para/>
+		/// -1 = Trying to pass a non-existent instrument <para/>
 		/// 0 = Cut <para/>
 		/// 1 = Note Off <para/>
 		/// 2 = Note Fade
@@ -689,7 +689,7 @@ namespace GameMusicInfoReader.Modules
 		/// 
 		/// <returns>
 		/// The PPS of the instrument (-32 - 32)<para/>
-		/// Returns -33 when trying to pass a non-existant instrument
+		/// Returns -33 when trying to pass a non-existent instrument
 		/// </returns>
 		/// 
 		/// <remarks>
@@ -715,7 +715,7 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="instrument">The instrument to get the default panning value from</param>
 		/// <returns>
-		/// -1 = Trying to pass a non-existant instrument <para/>
+		/// -1 = Trying to pass a non-existent instrument <para/>
 		/// Returns the default panning value (0 - 64)
 		/// </returns>
 		public int DefaultPan(int instrument)
@@ -738,7 +738,7 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="instrument">The instrument to get the RVV of.</param>
 		/// <returns>
-		/// -1 = Trying to pass a non-existant instrument<para/>
+		/// -1 = Trying to pass a non-existent instrument<para/>
 		/// Returns the random volume variation as a percentage between (0 - 100)
 		/// </returns>
 		public int RandomVolumeVariation(int instrument)
@@ -761,7 +761,7 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="instrument">The instrument to get the number of associated samples from</param>
 		/// <returns>
-		/// -1 = Trying to pass a non-existant instrument
+		/// -1 = Trying to pass a non-existent instrument
 		/// The number of samples associated with the specified instrument
 		/// </returns>
 		public int AssociatedSamples(int instrument)
