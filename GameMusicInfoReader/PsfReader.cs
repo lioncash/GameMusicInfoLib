@@ -167,7 +167,7 @@ namespace GameMusicInfoReader
 
 		/// <summary>
 		/// Any comments left in the xSF file.
-		/// Can be non-existant.
+		/// Can be non-existent.
 		/// </summary>
 		public string Comment
 		{

@@ -59,10 +59,11 @@ namespace GameMusicInfoReader.Modules
 
 		/// <summary>
 		/// The 4 character module ID for the MOD file
-		/// 
-		/// If module has ID's M.K., 8CHN, 4CHN, 6CHN, FLT4 or FLT8, then
-		/// the module has 31 instruments
 		/// </summary>
+		/// <remarks>
+        /// If module has ID's M.K., 8CHN, 4CHN, 6CHN, FLT4 or FLT8, then
+        /// the module has 31 instruments
+		/// </remarks>
 		public string ModuleID
 		{
 			get

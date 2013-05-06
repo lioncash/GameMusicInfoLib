@@ -8,7 +8,7 @@ namespace GameMusicInfoReader
 	/// </summary>
 	public sealed class SpcReader
 	{
-		// Filestream representing the spc file.
+		// Filestream representing the SPC file.
 		private readonly FileStream spc;
 
 		/// <summary>
@@ -299,7 +299,7 @@ namespace GameMusicInfoReader
 							return "Unknown";
 					}
 				}
-				
+
 				// No info chunk
 				return "No ID666 chunk in SPC file, cannot retrieve emulator used to dump SPC.";
 			}

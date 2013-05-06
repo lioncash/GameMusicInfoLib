@@ -9,7 +9,7 @@ namespace GameMusicInfoReader
 	/// </summary>
 	public sealed class SidReader : IDisposable
 	{
-		// Filestream representing the sid file.
+		// Filestream representing the SID file.
 		private readonly FileStream sid;
 		// Reader that helps with reading bytes.
 		private readonly BinaryReader br;

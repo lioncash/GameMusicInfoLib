@@ -160,7 +160,7 @@ namespace GameMusicInfoReader
 			// this shortens up things for us.
 			string news = entireFile.Substring(index);
 
-			// Get the first occurence of the 0xA character.
+			// Get the first occurrence of the 0xA character.
 			// This signifies the end of a tag
 			int nullIndex = news.IndexOf((char)0xA);
 

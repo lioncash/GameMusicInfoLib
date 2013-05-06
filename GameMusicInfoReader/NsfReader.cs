@@ -104,7 +104,7 @@ namespace GameMusicInfoReader
 		}
 
 		/// <summary>
-		/// The artists of the game music in the SPC file.
+		/// The artists of the game music in the NSF file.
 		/// <br/>
 		/// Can return &lt;?&gt; if no artist is specified.
 		/// </summary>
