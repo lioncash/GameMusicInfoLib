@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -6,7 +7,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for getting info from ScreamTracker 2.x modules.
 	/// </summary>
-	public class StmReader
+	public class StmReader : IDisposable
 	{
 		// TODO: Get instrument information
 
@@ -127,5 +128,22 @@ namespace GameMusicInfoReader.Modules
 				return stm.ReadByte();
 			}
 		}
+
+		#region IDisposable Methods
+
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+
+		private void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				stm.Dispose();
+			}
+		}
+
+		#endregion
 	}
 }

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -6,7 +7,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for getting info from MOD modules.
 	/// </summary>
-	public sealed class ModReader
+	public sealed class ModReader : IDisposable
 	{
 		// TODO: More info?
 
@@ -81,5 +82,22 @@ namespace GameMusicInfoReader.Modules
 				return encoding.GetString(moduleid);
 			}
 		}
+
+		#region IDisposable Methods
+
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+
+		private void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				mod.Dispose();
+			}
+		}
+
+		#endregion
 	}
 }

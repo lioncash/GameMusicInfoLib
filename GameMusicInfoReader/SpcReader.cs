@@ -7,7 +7,7 @@ namespace GameMusicInfoReader
 	/// <summary>
 	/// A reader for Super Nintendo SPC files.
 	/// </summary>
-	public sealed class SpcReader
+	public sealed class SpcReader : IDisposable
 	{
 		// Filestream representing the SPC file.
 		private readonly FileStream spc;
@@ -817,5 +817,23 @@ namespace GameMusicInfoReader
 				xid6ChunkSize -= 4;
 			}
 		}
+
+		#region IDisposable Methods
+
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+
+		private void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				spc.Dispose();
+			}
+		}
+
+
+		#endregion
 	}
 }

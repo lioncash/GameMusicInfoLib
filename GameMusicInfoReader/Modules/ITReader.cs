@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -10,7 +11,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// A reader for Impulse Tracker modules
 	/// </summary>
-	public class ITReader
+	public class ITReader : IDisposable
 	{
 		// Filestream representing an IT module
 		private readonly FileStream it;
@@ -1138,5 +1139,22 @@ namespace GameMusicInfoReader.Modules
 			it.Seek(sampleNum + 0x4E, SeekOrigin.Begin);
 			return it.ReadByte();
 		}
+
+		#region IDisposable Methods
+
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+
+		private void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				br.Dispose();
+			}
+		}
+
+		#endregion
 	}
 }

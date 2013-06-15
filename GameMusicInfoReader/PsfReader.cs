@@ -1,11 +1,12 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace GameMusicInfoReader
 {
 	/// <summary>
 	/// A class for reading files that are based off of the Playstation PSF format.
 	/// </summary>
-	public sealed class PsfReader
+	public sealed class PsfReader : IDisposable
 	{
 		// A filestream that represents an xSF file.
 		private readonly FileStream xsf;
@@ -227,5 +228,23 @@ namespace GameMusicInfoReader
 			// It also removes the part of the string that is the 'indexOf' parameter
 			return news.Substring(0, nullIndex).Remove(0, indexOf.Length);
 		}
+
+		#region IDisposable Methods
+
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+
+		private void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				if (xsf != null)
+					xsf.Dispose();
+			}
+		}
+
+		#endregion
 	}
 }

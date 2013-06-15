@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader
@@ -6,7 +7,7 @@ namespace GameMusicInfoReader
 	/// <summary>
 	/// A reader for getting info out of Gameboy GBS files.
 	/// </summary>
-	public class GbsReader
+	public sealed class GbsReader : IDisposable
 	{
 		// Filestream representing a GBS file
 		private readonly FileStream gbs;
@@ -142,5 +143,20 @@ namespace GameMusicInfoReader
 			}
 		}
 
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+
+		private void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				if (gbs != null)
+				{
+					gbs.Dispose();
+				}
+			}
+		}
 	}
 }

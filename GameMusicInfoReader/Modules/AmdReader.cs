@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -6,7 +7,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// A reader for getting info from AMusic AMD files.
 	/// </summary>
-	public sealed class AmdReader
+	public sealed class AmdReader : IDisposable
 	{
 		// A Filestream representing an AMD module.
 		private readonly FileStream amd;
@@ -104,5 +105,22 @@ namespace GameMusicInfoReader.Modules
 				return amd.ReadByte();
 			}
 		}
+
+		#region IDisposable Methods
+
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+
+		public void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				amd.Dispose();
+			}
+		}
+
+		#endregion
 	}
 }

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -6,7 +7,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for getting info from Polytracker PTM modules.
 	/// </summary>
-	public class PtmReader
+	public class PtmReader : IDisposable
 	{
 		// TODO: Read sample information
 
@@ -122,5 +123,22 @@ namespace GameMusicInfoReader.Modules
 				return ptm.ReadByte();
 			}
 		}
+
+		#region IDisposable Methods
+
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+
+		private void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				ptm.Dispose();
+			}
+		}
+
+		#endregion
 	}
 }

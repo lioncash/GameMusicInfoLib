@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -6,7 +7,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// A reader for getting info from 669 modules.
 	/// </summary>
-	public class SixSixNineReader
+	public class SixSixNineReader : IDisposable
 	{
 		// Filestream representing a 669 module.
 		private readonly FileStream ssn;
@@ -110,5 +111,22 @@ namespace GameMusicInfoReader.Modules
 				return ssn.ReadByte();
 			}
 		}
+
+		#region IDisposable Methods
+
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+
+		private void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				ssn.Dispose();
+			}
+		}
+
+		#endregion
 	}
 }

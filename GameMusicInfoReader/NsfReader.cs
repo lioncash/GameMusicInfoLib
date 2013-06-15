@@ -7,7 +7,7 @@ namespace GameMusicInfoReader
 	/// <summary>
 	/// Reader for Nintendo NSF Files
 	/// </summary>
-	public sealed class NsfReader
+	public sealed class NsfReader : IDisposable
 	{
 		// Filestream representing an NSF file
 		private readonly FileStream nsf;
@@ -408,5 +408,24 @@ namespace GameMusicInfoReader
 				return (IsUsingVrc6SoundChip || IsUsingVrc7SoundChip || IsUsingFdsAudio || IsUsingMMC5Audio || IsUsingNamco || IsUsingSunsoft);
 			}
 		}
+
+
+		#region IDisposable methods
+
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+
+		private void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				if (nsf != null)
+					nsf.Dispose();
+			}
+		}
+
+		#endregion
 	}
 }

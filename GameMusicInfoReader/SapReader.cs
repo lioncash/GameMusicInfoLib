@@ -1,11 +1,12 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace GameMusicInfoReader
 {
 	/// <summary>
 	/// Reader for Atari SAP files
 	/// </summary>
-	public sealed class SapReader
+	public sealed class SapReader : IDisposable
 	{
 		// Filestream that represents an Atari SAP file.
 		private readonly FileStream sap;
@@ -168,5 +169,23 @@ namespace GameMusicInfoReader
 			// It also removes the part of the string that is the 'indexOf' parameter
 			return news.Substring(0, nullIndex).Remove(0, indexOf.Length);
 		}
+
+		#region IDisposable Methods
+
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+
+		private void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				if (sap != null)
+					sap.Dispose();
+			}
+		}
+
+		#endregion
 	}
 }

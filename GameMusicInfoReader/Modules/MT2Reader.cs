@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -6,7 +7,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for getting info from MadTracker 2 modules.
 	/// </summary>
-	public class MT2Reader
+	public class MT2Reader : IDisposable
 	{
 		// TODO: Patterns, Instrument chunk, Automation chunk, Drums
 
@@ -363,6 +364,23 @@ namespace GameMusicInfoReader.Modules
 				return entireFile.Substring(startIndex, length);
 			}
 		}
+
+		#region IDisposable Methods
+
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+
+		private void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				mtt.Dispose();
+			}
+		}
+
+		#endregion
 	}
 }
 

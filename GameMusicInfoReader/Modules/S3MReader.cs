@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -6,7 +7,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for getting info from S3M modules.
 	/// </summary>
-	public class S3MReader
+	public class S3MReader : IDisposable
 	{
 		// Filestream representing an S3M module.
 		private readonly FileStream s3m;
@@ -159,5 +160,22 @@ namespace GameMusicInfoReader.Modules
 				return false;
 			}
 		}
+
+		#region IDisposable Methods
+
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+
+		private void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				s3m.Dispose();
+			}
+		}
+
+		#endregion
 	}
 }

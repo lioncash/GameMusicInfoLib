@@ -81,11 +81,23 @@ namespace GameMusicInfoReader.Modules
 			}
 		}
 
+		#region IDisposable Methods
+
 		// Make sure BinaryReader cleans up properly.
 		public void Dispose()
 		{
-			br.Close();
-			br.Dispose();
+			Dispose(true);
 		}
+
+		private void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				br.Close();
+				br.Dispose();
+			}
+		}
+
+		#endregion
 	}
 }

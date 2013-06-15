@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -6,7 +7,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for XM module files
 	/// </summary>
-	public class XMReader
+	public class XMReader : IDisposable
 	{
 		// Filstream representing an XM module.
 		private readonly FileStream xm;
@@ -188,5 +189,21 @@ namespace GameMusicInfoReader.Modules
 			}
 		}
 
+		#region IDisposable Methods
+
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+
+		private void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				xm.Dispose();
+			}
+		}
+
+		#endregion
 	}
 }
