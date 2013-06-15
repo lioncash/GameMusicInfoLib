@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader
@@ -18,6 +19,7 @@ namespace GameMusicInfoReader
 		public SpcReader(string path)
 		{
 			spc = File.OpenRead(path);
+			GetXid6Tags();
 		}
 
 		/// <summary>
@@ -305,6 +307,515 @@ namespace GameMusicInfoReader
 			}
 		}
 
-		// TODO: Read xid6 tags.
+
+		//
+		//
+		// XID6 Extended tag reading functions
+		//
+		//
+
+		//
+		// NOTE: Some things may be defined in the regular tags (if they fully fit)
+		// and may not appear in the extended tags. So it's best to check both first (for length).
+		//
+		// ie). If the regular tags artist name length < extended tag artist name length, display the extended one, etc.
+		//
+
+		//
+		// Data fields:
+		//
+		//       String  = Minimum: 4 characters in length, Maximum: 256 characters in length (including null terminating char in both cases).
+		//       Integer = 4-bytes in length (after the sub-chunk header).
+		//       Data    = 1 or 2 bytes, usually stored inside the sub-chunk's header.
+		//
+
+		//
+		// Extended header info types
+		//
+		private const int Xid6_Song                = 0x01;
+		private const int Xid6_Game                = 0x02;
+		private const int Xid6_Artist              = 0x03;
+		private const int Xid6_Dumper              = 0x04;
+		private const int Xid6_Date                = 0x05;
+		private const int Xid6_Emu                 = 0x06;
+		private const int Xid6_Comment             = 0x07;
+		private const int Xid6_OST                 = 0x10;
+		private const int Xid6_Disc                = 0x11;
+		private const int Xid6_Track               = 0x12;
+		private const int Xid6_Publisher           = 0x13;
+		private const int Xid6_Copyright           = 0x14;
+		private const int Xid6_IntroLength         = 0x30;
+		private const int Xid6_LoopLength          = 0x31;
+		private const int Xid6_EndLength           = 0x32;
+		private const int Xid6_FadeLength          = 0x33;
+		private const int Xid6_MutedVoices         = 0x34; // NOTE: A bit is set for every voice muted.
+		private const int Xid6_NumberOfTimesToLoop = 0x35;
+		private const int Xid6_MixingPreAmpLevel   = 0x36;
+
+		private const int XidMaxTicks    = 383999999; // Max num of allowed ticks. (99:59.99 * 64k)
+		private const int XidTicksPerMin  = 3840000;
+		private const int XidTicksPerSec  = 64000;     // Number of ticks per second.
+		private const int XidTicksPerMsec = 64;        // Number of ticks per millisecond.
+
+
+		/// <summary>
+		/// Extended info: Song name.
+		/// </summary>
+		public string XidSong
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: Game name.
+		/// </summary>
+		public string XidGame
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: Artist name.
+		/// </summary>
+		public string XidArtist
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: Dumper name
+		/// </summary>
+		public string XidDumper
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: Dump Date
+		/// </summary>
+		public int XidDumpDate
+		{
+			get; 
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: What emulator this SPC file was dumped with.
+		/// </summary>
+		public int XidEmulator
+		{
+			get;
+			set;
+		}
+
+		/// <summary>
+		/// Extended info: Comments.
+		/// </summary>
+		public string XidComment
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: OST title.
+		/// </summary>
+		public string XidOstTitle
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: OST disc number
+		/// </summary>
+		public int XidDiscNumber
+		{
+			get; 
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: Track number.
+		/// </summary>
+		public int XidTrackNumber
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: Publisher name.
+		/// </summary>
+		public string XidPublisher
+		{
+			get; 
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: Copyright year
+		/// </summary>
+		public int XidCopyright
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: Intro length (in ticks).
+		/// </summary>
+		public int XidIntroLength
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: Loop length (in ticks).
+		/// </summary>
+		public int XidLoopLength
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: End length (in ticks).
+		/// </summary>
+		public int XidEndLength
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: Fade length (in ticks).
+		/// </summary>
+		public int XidFadeLength
+		{
+			get; 
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: Muted channels (each set bit is a muted channel).
+		/// </summary>
+		public int XidMutedChannels
+		{
+			get; 
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: Number of times to loop.
+		/// </summary>
+		public int XidNumberOfTimesToLoop
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Extended info: Mixing (preamp) level.
+		/// </summary>
+		public int XidMixingLevel
+		{
+			get;
+			private set;
+		}
+		
+
+		// Gets the Xid6 tags and assigns the results to their
+		// respective properties.
+		private void GetXid6Tags()
+		{
+			BinaryReader br = new BinaryReader(spc);
+
+			// Seek to just after the 'xid6' characters in the header.
+			br.BaseStream.Seek(0x10204, SeekOrigin.Begin);
+
+			// XID6 chunk size excluding the header.
+			int xid6ChunkSize = (br.ReadInt32() + 3) & ~3;
+			
+			// Chunk loop
+			// Each chunk is 4 bytes per header, if we're above or equal to it, chances
+			// are that we still have a tag to read. Length of stream - current position in stream = number of bytes left to read.
+			// if we have less than 4, then there's no more chunks to read.
+			while ((br.BaseStream.Length - br.BaseStream.Position) >= 4)
+			{
+				int chunkID = br.ReadByte();
+				int type    = br.ReadByte();
+
+				switch (chunkID)
+				{
+					case Xid6_Song:
+					{
+						int lengthOfSongName = br.ReadInt16();
+
+						if (lengthOfSongName < 1 || lengthOfSongName > 0x100)
+						{
+							// Do nothing, invalid song name.
+						}
+						else
+						{
+							char[] songNameChars = new char[lengthOfSongName];
+							br.Read(songNameChars, 0, lengthOfSongName);
+							XidSong = new string(songNameChars);
+						}
+						break;
+					}
+
+					case Xid6_Game:
+					{
+						int lengthOfGameName = br.ReadInt16();
+
+						if (lengthOfGameName < 1 || lengthOfGameName > 0x100)
+						{
+							// Do nothing, invalid length
+						}
+						else
+						{
+							char[] gameNameChars = new char[lengthOfGameName];
+							br.Read(gameNameChars, 0, lengthOfGameName);
+
+							XidGame = new string(gameNameChars);
+						}
+						break;
+					}
+
+					case Xid6_Artist:
+					{
+						int lengthOfArtistName = br.ReadInt16();
+
+						if (lengthOfArtistName < 1 || lengthOfArtistName > 0x100)
+						{
+							// Do nothing, invalid length.
+						}
+						else
+						{
+							char[] artistNameChars = new char[lengthOfArtistName];
+							br.Read(artistNameChars, 0, lengthOfArtistName);
+
+							XidArtist = new string(artistNameChars);
+						}
+						break;
+					}
+
+					case Xid6_Dumper:
+					{
+						int lengthOfDumperName = br.ReadInt16();
+
+						if (lengthOfDumperName < 1 || lengthOfDumperName > 0x11)
+						{
+							// Do nothing, invalid length.
+						}
+						else
+						{
+							char[] dumperNameChars = new char[lengthOfDumperName];
+							br.Read(dumperNameChars, 0, lengthOfDumperName);
+
+							XidDumper = new string(dumperNameChars);
+						}
+						break;
+					}
+
+					case Xid6_Date:
+					{
+						int dateLen = br.ReadInt16();
+						XidDumpDate = br.ReadInt32();
+						break;
+					}
+
+					case Xid6_Emu:
+					{
+						XidEmulator = br.ReadByte();
+						br.ReadByte(); // Skip last byte in sub-chunk header.
+						break;
+					}
+
+					case Xid6_Comment:
+					{
+						int lengthOfComment = br.ReadInt16();
+
+						if (lengthOfComment < 1 || lengthOfComment > 0x100)
+						{
+							// Do nothing, invalid comment.
+						}
+						else
+						{
+							char[] commentChars = new char[lengthOfComment];
+							br.Read(commentChars, 0, lengthOfComment);
+
+							XidComment = new string(commentChars);
+						}
+						break;
+					}
+
+					case Xid6_OST:
+					{
+						int lengthOfOst = br.ReadInt16();
+
+						if (lengthOfOst < 1 || lengthOfOst > 0x100)
+						{
+							// Do nothing, invalid OST title.
+						}
+						else
+						{
+							char[] ostChars = new char[lengthOfOst];
+							br.Read(ostChars, 0, lengthOfOst);
+
+							XidOstTitle = new string(ostChars);
+						}
+						break;
+					}
+
+					case Xid6_Disc:
+					{
+						int discNum = br.ReadInt16();
+
+						if (discNum > 9)
+							discNum = 9;
+
+						XidDiscNumber = discNum;
+
+						break;
+					}
+
+					case Xid6_Track:
+					{
+						int track = br.ReadInt16() >> 8; // Lower byte is an optional character, we don't need to care about this.
+
+						if (track - 1 > 98)
+							track = 0;
+
+						XidTrackNumber = track;
+
+						break;
+					}
+
+					case Xid6_Publisher:
+					{
+						int publisherNameLength = br.ReadInt16();
+
+						if (publisherNameLength < 1 || publisherNameLength > 0x100)
+						{
+							// Do nothing, invalid publisher name.
+						}
+						else
+						{
+							char[] publisherNameChars = new char[publisherNameLength];
+							br.Read(publisherNameChars, 0, publisherNameLength);
+							XidPublisher = new string(publisherNameChars);
+						}
+						break;
+					}
+
+					case Xid6_Copyright:
+					{
+						XidCopyright = br.ReadInt16();
+						break;
+					}
+
+					case Xid6_IntroLength:
+					{
+						br.ReadInt16(); // Skip last 2 bytes of the sub-chunk header.
+						
+						int introLen = br.ReadInt32();
+
+						if (introLen > XidMaxTicks)
+							introLen = XidMaxTicks;
+
+						XidIntroLength = introLen;
+						break;
+					}
+
+					case Xid6_LoopLength:
+					{
+						br.ReadInt16(); // Skip last 2 bytes of the sub-chunk header.
+
+						int loopLen = br.ReadInt32();
+
+						if (loopLen > XidMaxTicks)
+							loopLen = XidMaxTicks;
+
+						XidLoopLength = loopLen;
+						break;
+					}
+
+					case Xid6_EndLength:
+					{
+						br.ReadInt16(); // Skip last 2 bytes of the sub-chunk header.
+
+						int endLen = br.ReadInt32();
+
+						if (endLen > XidMaxTicks)
+							endLen = XidMaxTicks;
+
+						XidEndLength = endLen;
+						break;
+					}
+
+					case Xid6_FadeLength:
+					{
+						br.ReadInt16(); // Skip last 2 bytes of the sub-chunk header.
+
+						int fadeLen = br.ReadInt32();
+
+						if (fadeLen > XidTicksPerMin - 1)
+							fadeLen = XidTicksPerMin - 1;
+
+						XidFadeLength = fadeLen;
+						break;
+					}
+
+					case Xid6_MutedVoices:
+					{
+						XidMutedChannels = br.ReadByte();
+						br.ReadByte(); // Skip last byte in sub-chunk header.
+						break;
+					}
+
+					case Xid6_NumberOfTimesToLoop:
+					{
+						int loopTimes = br.ReadByte();
+
+						if (loopTimes < 1)
+							loopTimes = 1;
+
+						if (loopTimes > 9)
+							loopTimes = 9;
+
+						XidNumberOfTimesToLoop = loopTimes;
+
+						br.ReadByte(); // Skip last byte in sub-chunk header.
+						break;
+					}
+
+					case Xid6_MixingPreAmpLevel:
+					{
+						int mixLevel = br.ReadByte();
+
+						if (mixLevel < 32768)
+							mixLevel = 32768;
+
+						if (mixLevel > 524288)
+							mixLevel = 524288;
+
+						XidMixingLevel = mixLevel;
+
+						br.ReadByte(); // Skip last byte in sub-chunk header.
+						break;
+					}
+				}
+
+
+				xid6ChunkSize -= 4;
+			}
+		}
 	}
 }
