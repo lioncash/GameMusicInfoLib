@@ -7,7 +7,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for Disorder Tracker 2 modules
 	/// </summary>
-	public class PlmReader : IDisposable
+	public sealed class PlmReader : IDisposable
 	{
 		// Filestream representing a PLM module.
 		private readonly FileStream plm;

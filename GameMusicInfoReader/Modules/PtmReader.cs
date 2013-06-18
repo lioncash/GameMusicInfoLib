@@ -7,7 +7,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for getting info from Polytracker PTM modules.
 	/// </summary>
-	public class PtmReader : IDisposable
+	public sealed class PtmReader : IDisposable
 	{
 		// TODO: Read sample information
 

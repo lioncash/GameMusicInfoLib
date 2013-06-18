@@ -7,7 +7,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for getting info from S3M modules.
 	/// </summary>
-	public class S3MReader : IDisposable
+	public sealed class S3MReader : IDisposable
 	{
 		// Filestream representing an S3M module.
 		private readonly FileStream s3m;

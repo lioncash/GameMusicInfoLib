@@ -7,7 +7,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for XM module files
 	/// </summary>
-	public class XMReader : IDisposable
+	public sealed class XMReader : IDisposable
 	{
 		// Filstream representing an XM module.
 		private readonly FileStream xm;

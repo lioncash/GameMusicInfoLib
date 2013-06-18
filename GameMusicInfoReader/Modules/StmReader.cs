@@ -7,7 +7,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for getting info from ScreamTracker 2.x modules.
 	/// </summary>
-	public class StmReader : IDisposable
+	public sealed class StmReader : IDisposable
 	{
 		// TODO: Get instrument information
 

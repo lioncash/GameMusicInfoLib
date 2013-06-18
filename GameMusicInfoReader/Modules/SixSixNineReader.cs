@@ -7,7 +7,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// A reader for getting info from 669 modules.
 	/// </summary>
-	public class SixSixNineReader : IDisposable
+	public sealed class SixSixNineReader : IDisposable
 	{
 		// Filestream representing a 669 module.
 		private readonly FileStream ssn;

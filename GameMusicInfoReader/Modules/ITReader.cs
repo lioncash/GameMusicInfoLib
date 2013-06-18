@@ -11,7 +11,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// A reader for Impulse Tracker modules
 	/// </summary>
-	public class ITReader : IDisposable
+	public sealed class ITReader : IDisposable
 	{
 		// Filestream representing an IT module
 		private readonly FileStream it;

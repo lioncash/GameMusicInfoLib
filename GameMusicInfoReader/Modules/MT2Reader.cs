@@ -7,7 +7,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for getting info from MadTracker 2 modules.
 	/// </summary>
-	public class MT2Reader : IDisposable
+	public sealed class MT2Reader : IDisposable
 	{
 		// TODO: Patterns, Instrument chunk, Automation chunk, Drums
 
