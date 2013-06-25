@@ -37,6 +37,7 @@
     <Compile Include="GbsReader.cs" />
     <Compile Include="Modules\AmdReader.cs" />
     <Compile Include="Modules\AmsReader.cs" />
+    <Compile Include="Modules\DbmReader.cs" />
     <Compile Include="Modules\ITReader.cs" />
     <Compile Include="Modules\ModReader.cs" />
     <Compile Include="Modules\MT2Reader.cs" />
