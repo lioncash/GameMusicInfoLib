@@ -5,7 +5,7 @@ using System.Text;
 namespace GameMusicInfoReader.Modules
 {
 	/// <summary>
-	/// Reader for getting info from MOD modules.
+	/// Reader for getting info from Protracker MOD modules.
 	/// </summary>
 	public sealed class ModReader : IDisposable
 	{
@@ -38,8 +38,7 @@ namespace GameMusicInfoReader.Modules
 				mod.Read(songTitle, 0, 20);
 
 				// Convert retrieved bytes into a string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(songTitle);
+				return Encoding.UTF8.GetString(songTitle);
 			}
 		}
 
@@ -78,8 +77,7 @@ namespace GameMusicInfoReader.Modules
 				mod.Read(moduleid, 0, 4);
 
 				// Convert retrieved bytes into a string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(moduleid);
+				return Encoding.UTF8.GetString(moduleid);
 			}
 		}
 

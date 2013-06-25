@@ -40,8 +40,7 @@ namespace GameMusicInfoReader.Modules
 				ssn.Read(magic, 0, 2);
 
 				// Convert retrieved bytes into a string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(magic);
+				return Encoding.UTF8.GetString(magic);
 			}
 		}
 
@@ -61,8 +60,7 @@ namespace GameMusicInfoReader.Modules
 				ssn.Read(commentBytes, 0, 108);
 
 				// Convert retrieved bytes into a string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(commentBytes);
+				return Encoding.UTF8.GetString(commentBytes);
 			}
 		}
 

@@ -36,8 +36,7 @@ namespace GameMusicInfoReader
 				gbs.Read(magic, 0, 3);
 
 				// Convert retrieved bytes into a string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(magic);
+				return Encoding.UTF8.GetString(magic);
 			}
 		}
 
@@ -98,8 +97,7 @@ namespace GameMusicInfoReader
 				gbs.Read(songTitle, 0, 32);
 
 				// Convert bytes to string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(songTitle);
+				return Encoding.UTF8.GetString(songTitle);
 			}
 		}
 
@@ -118,8 +116,7 @@ namespace GameMusicInfoReader
 				gbs.Read(artistTitle, 0, 32);
 
 				// Convert bytes to string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(artistTitle);
+				return Encoding.UTF8.GetString(artistTitle);
 			}
 		}
 
@@ -138,8 +135,7 @@ namespace GameMusicInfoReader
 				gbs.Read(copyright, 0, 32);
 
 				// Convert bytes to string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(copyright);
+				return Encoding.UTF8.GetString(copyright);
 			}
 		}
 

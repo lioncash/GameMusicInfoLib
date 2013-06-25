@@ -36,8 +36,7 @@ namespace GameMusicInfoReader.Modules
 				s3m.Read(songTitle, 0, 20);
 
 				// Convert retrieved bytes into a string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(songTitle);
+				return Encoding.UTF8.GetString(songTitle);
 			}
 		}
 

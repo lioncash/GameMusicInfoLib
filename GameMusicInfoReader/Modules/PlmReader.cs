@@ -22,6 +22,23 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
+		/// Header identifier for PLM modules.
+		/// </summary>
+		public string HeaderID
+		{
+			get
+			{
+				// Ensure we start at the beginning of the stream.
+				plm.Position = 0;
+
+				byte[] magicBytes = new byte[4];
+				plm.Read(magicBytes, 0, magicBytes.Length);
+
+				return Encoding.UTF8.GetString(magicBytes);
+			}
+		}
+
+		/// <summary>
 		/// Number of bytes in the header
 		/// </summary>
 		public int HeaderSize
@@ -52,8 +69,7 @@ namespace GameMusicInfoReader.Modules
 				plm.Read(songName, 0, 48);
 
 				// Convert to string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(songName);
+				return Encoding.UTF8.GetString(songName);
 			}
 		}
 

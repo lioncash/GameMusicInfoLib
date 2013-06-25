@@ -28,7 +28,7 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// The eader magic of the IT module
+		/// The header magic of the IT module
 		/// </summary>
 		public string HeaderID
 		{
@@ -43,8 +43,7 @@ namespace GameMusicInfoReader.Modules
 				it.Read(magic, 0, 4);
 
 				// Convert bytes to string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(magic);
+				return Encoding.UTF8.GetString(magic);
 			}
 		}
 
@@ -64,8 +63,7 @@ namespace GameMusicInfoReader.Modules
 				it.Read(songName, 0, 26);
 
 				// Convert bytes to string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(songName);
+				return Encoding.UTF8.GetString(songName);
 			}
 		}
 
@@ -158,8 +156,10 @@ namespace GameMusicInfoReader.Modules
 		/// <summary>
 		/// True if the no mixing occurs if no mixing
 		/// occurs when the volume at mixing time is 0.
-		/// <remarks>Is considered a redundant flag since IT 1.04+</remarks>
 		/// </summary>
+		/// <remarks>
+		/// Is considered a redundant flag since IT 1.04+
+		/// </remarks>
 		public bool HasVol0MixOptimizations
 		{
 			get
@@ -179,8 +179,8 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// True if the module uses instruments. <para/>
-		/// False if the module uses samples.
+		/// <para>True if the module uses instruments. </para>
+		/// <para>False if the module uses samples.    </para>
 		/// </summary>
 		public bool UsesInstruments
 		{
@@ -201,8 +201,8 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// Returns 1 if the module uses linear slides. <para/>
-		/// Returns 0 if the modules uses Amiga slides.
+		/// <para>Returns 1 if the module uses linear slides. </para>
+		/// <para>Returns 0 if the modules uses Amiga slides. </para>
 		/// </summary>
 		public int SlideType
 		{
@@ -223,8 +223,8 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// True if the module uses old effects. <para/>
-		/// False if the module uses IT effects.
+		/// <para>True if the module uses old effects. </para>
+		/// <para>False if the module uses IT effects. </para>
 		/// </summary>
 		public bool UsesOldEffects
 		{
@@ -410,8 +410,7 @@ namespace GameMusicInfoReader.Modules
 					byte[] messageBytes = br.ReadBytes(length);
 
 					// Convert bytes to a string
-					UTF8Encoding encoding = new UTF8Encoding();
-					string msg = encoding.GetString(messageBytes);
+					string msg = Encoding.UTF8.GetString(messageBytes);
 
 					// Correctly replace 0xD with the newline.
 					return msg.Replace((char)0xD, '\n');
@@ -458,7 +457,7 @@ namespace GameMusicInfoReader.Modules
 
 		/// <summary>
 		/// The number of used channels.
-		/// <para/>
+		/// <para></para>
 		/// Has a max of 64 channels
 		/// </summary>
 		public int TotalChannels
@@ -489,18 +488,18 @@ namespace GameMusicInfoReader.Modules
 
 		/// <summary>
 		/// Gets all the channel panning values for each channel as an array.
-		/// <para/>
+		/// <para></para>
 		/// Note that since arrays are 0-based, the total indexes for the channels are 'totalChannels - 1'
-		/// <para/>
-		/// ie). A 22 channel IT module will have an index of (0 - 21). <para/>
+		/// <para></para>
+		/// ie). A 22 channel IT module will have an index of (0 - 21).
 		/// So, channel one is channel[0], etc
 		/// </summary>
 		///
 		/// <remarks>
-		/// Panning values for each channel are within the range (0 - 64), where: <para/>
-		/// 0 = Absolute left <para/>
-		/// 32 = Central pan <para/>
-		/// 64 = Absolute right
+		/// Panning values for each channel are within the range (0 - 64), where:
+		/// <para>0 = Absolute left   </para>
+		/// <para>32 = Central pan    </para>
+		/// <para>64 = Absolute right </para>
 		/// </remarks>
 		public int[] ChannelPanning
 		{
@@ -526,9 +525,9 @@ namespace GameMusicInfoReader.Modules
 		/// Gets the volumes of all channels and stores them in an array.
 		/// </summary>
 		/// <remarks>
-		/// Note that since arrays are 0-based, the total indexes for the channel volumes are 'totalChannels - 1' <para/>
-		/// ie). A 22 channel IT module will have an index of (0 - 21). <para/>
-		/// So, channel one is channel[0], etc <para/><para/>
+		/// Note that since arrays are 0-based, the total indexes for the channel volumes are 'totalChannels - 1'
+		/// ie). A 22 channel IT module will have an index of (0 - 21).
+		/// So, channel one is channel[0], etc
 		/// Channel volumes can be from (0 - 64)
 		/// </remarks>
 		public int[] ChannelVolumes
@@ -578,11 +577,11 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="instrument">The instrument to get the new note action of</param>
 		/// <returns>
-		/// -1 = When entering a value larger than TotalInstruments, or less than 0.<para/>
-		/// 0 = Cut note <para/>
-		/// 1 = Continue <para/>
-		/// 2 = Note off <para/>
-		/// 3 = Note fade.
+		/// <para>-1 = When entering a value larger than TotalInstruments, or less than 0.</para>
+		/// <para>0 = Cut note </para>
+		/// <para>1 = Continue </para>
+		/// <para>2 = Note off </para>
+		/// <para>3 = Note fade.</para>
 		/// </returns>
 		/// <remarks>
 		/// This method is ZERO-BASED. ie) channel 1 = NewNoteAction(0)
@@ -607,11 +606,11 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="instrument">The instrument to get the duplicate check type information from.</param>
 		/// <returns>
-		/// -1 = Trying to pass a non-existent instrument <para/>
-		/// 0 = Off <para/>
-		/// 1 = Note <para/>
-		/// 2 = Sample <para/>
-		/// 3 = Instrument
+		/// <para>-1 = Trying to pass a non-existent instrument </para>
+		/// <para>0 = Off</para>
+		/// <para>1 = Note</para>
+		/// <para>2 = Sample</para>
+		/// <para>3 = Instrument</para>
 		/// </returns>
 		/// <remarks>
 		/// This method is ZERO-BASED. ie) channel 1 = DuplicateCheckType(0)
@@ -636,10 +635,10 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="instrument">The instrument to get the DCA value from</param>
 		/// <returns>
-		/// -1 = Trying to pass a non-existent instrument <para/>
-		/// 0 = Cut <para/>
-		/// 1 = Note Off <para/>
-		/// 2 = Note Fade
+		/// <para>-1 = Trying to pass a non-existent instrument </para>
+		/// <para>0 = Cut </para>
+		/// <para>1 = Note Off </para>
+		/// <para>2 = Note Fade </para>
 		/// </returns>
 		/// <remarks>
 		/// This method is ZERO-BASED. ie) channel 1 = DuplicateCheckAction(0)
@@ -660,7 +659,7 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// Fadeout of an instrument. <para/>
+		/// Fadeout of an instrument.
 		/// Ranges between (0 - 128)
 		/// </summary>
 		/// <param name="instrument">The instrument to get the fadeout length of</param>
@@ -689,8 +688,8 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="instrument">The instrument to get the PPS of</param>
 		/// 
 		/// <returns>
-		/// The PPS of the instrument (-32 - 32)<para/>
-		/// Returns -33 when trying to pass a non-existent instrument
+		/// <para>The PPS of the instrument (-32 - 32)</para>
+		/// <para>Returns -33 when trying to pass a non-existent instrument</para>
 		/// </returns>
 		/// 
 		/// <remarks>
@@ -716,8 +715,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="instrument">The instrument to get the default panning value from</param>
 		/// <returns>
-		/// -1 = Trying to pass a non-existent instrument <para/>
-		/// Returns the default panning value (0 - 64)
+		/// <para>-1 = Trying to pass a non-existent instrument </para>
+		/// <para>Returns the default panning value (0 - 64)</para>
 		/// </returns>
 		public int DefaultPan(int instrument)
 		{
@@ -739,8 +738,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="instrument">The instrument to get the RVV of.</param>
 		/// <returns>
-		/// -1 = Trying to pass a non-existent instrument<para/>
-		/// Returns the random volume variation as a percentage between (0 - 100)
+		/// <para>-1 = Trying to pass a non-existent instrument</para>
+		/// <para>Returns the random volume variation as a percentage between (0 - 100)</para>
 		/// </returns>
 		public int RandomVolumeVariation(int instrument)
 		{
@@ -762,8 +761,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="instrument">The instrument to get the number of associated samples from</param>
 		/// <returns>
-		/// -1 = Trying to pass a non-existent instrument
-		/// The number of samples associated with the specified instrument
+		/// <para>-1 = Trying to pass a non-existent instrument</para>
+		/// <para>The number of samples associated with the specified instrument</para>
 		/// </returns>
 		public int AssociatedSamples(int instrument)
 		{
@@ -785,8 +784,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="instrument">The instrument to get the name of</param>
 		/// <returns>
-		/// The name of the instrument. <para/>
-		/// Null, if an invalid instrument is passed
+		/// <para>The name of the instrument. </para>
+		/// <para>Null, if an invalid instrument is passed</para>
 		/// </returns>
 		public string InstrumentName(int instrument)
 		{
@@ -803,8 +802,7 @@ namespace GameMusicInfoReader.Modules
 			it.Read(instrumentName, 0, 26);
 
 			// Convert bytes to string
-			UTF8Encoding encoding = new UTF8Encoding();
-			return encoding.GetString(instrumentName);
+			return Encoding.UTF8.GetString(instrumentName);
 		}
 
 		///////////////////////////
@@ -851,8 +849,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="sample">The sample to check</param>
 		/// <returns>
-		/// True if the sample is 16-bit. <para/>
-		/// False if the sample is 8-bit
+		/// <para>True if the sample is 16-bit. </para>
+		/// <para>False if the sample is 8-bit. </para>
 		/// </returns>
 		/// <remarks>
 		/// This method is ZERO-BASED. ie) Sample 1 = Is16Bit(0)
@@ -874,8 +872,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="sample">The sample to check.</param>
 		/// <returns>
-		/// True, if the sample is compressed. <para/>
-		/// False, if the sample is not.
+		/// <para>True, if the sample is compressed. </para>
+		/// <para>False, if the sample is not. </para>
 		/// </returns>
 		public bool IsACompressedSample(int sample)
 		{
@@ -894,8 +892,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="sample">The sample to check.</param>
 		/// <returns>
-		/// True, if the sample is looped. <para/>
-		/// False, if the sample is not.
+		/// <para>True, if the sample is looped. </para>
+		/// <para>False, if the sample is not. </para>
 		/// </returns>
 		/// <remarks>
 		/// This method is ZERO-BASED. ie) Sample 1 = IsLooped(0)
@@ -917,8 +915,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="sample">The sample to check.</param>
 		/// <returns>
-		/// True, if the sample uses a sustain loop. <para/>
-		/// False, if the sample does not.
+		/// <para>True, if the sample uses a sustain loop. </para>
+		/// <para>False, if the sample does not. </para>
 		/// </returns>
 		/// <remarks>
 		/// This method is ZERO-BASED. ie) Sample 1 = SustainIsLooped(0)
@@ -940,8 +938,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="sample">The sample to check</param>
 		/// <returns>
-		/// True = Uses a ping-pong loop <para/>
-		/// False = Uses a forward loop
+		/// <para>True = Uses a ping-pong loop </para>
+		/// <para>False = Uses a forward loop </para>
 		/// </returns>
 		/// <remarks>
 		/// This method is ZERO-BASED. ie) Sample 1 = UsesPingPongLoop(0)
@@ -963,8 +961,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="sample">The sample to check</param>
 		/// <returns>
-		/// True = Uses a ping-pong sustain loop <para/>
-		/// False = Uses a forward sustain loop
+		/// <para>True = Uses a ping-pong sustain loop </para>
+		/// <para>False = Uses a forward sustain loop</para>
 		/// </returns>
 		/// <remarks>
 		/// This method is ZERO-BASED. ie) Sample 1 = UsesPingPongSustainLoop(0)
@@ -1037,8 +1035,7 @@ namespace GameMusicInfoReader.Modules
 			it.Read(sampleName, 0, 26);
 
 			// Convert bytes to string
-			UTF8Encoding encoding = new UTF8Encoding();
-			return encoding.GetString(sampleName);
+			return Encoding.UTF8.GetString(sampleName);
 		}
 
 		/// <summary>
@@ -1046,8 +1043,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="sample">The sample to check the samples of.</param>
 		/// <returns>
-		/// True = Samples are signed. <para/>
-		/// False = Samples are unsigned
+		/// <para>True = Samples are signed. </para>
+		/// <para>False = Samples are unsigned </para>
 		/// </returns>
 		/// <remarks>
 		/// This method is ZERO-BASED. ie) Sample 1 = SamplesAreSigned(0)
@@ -1103,11 +1100,11 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		/// <param name="sample">The sample to get the vibrato waveform type from.</param>
 		/// <returns>
-		/// The vibrato waveform of the sample. <para/>
-		/// 0 = Sine wave <para/>
-		/// 1 = Ramp down <para/>
-		/// 2 = Square wave <para/>
-		/// 3 = Random (speed is irrelevant) <para/>
+		/// <para>The vibrato waveform of the sample. </para>
+		/// <para>0 = Sine wave </para>
+		/// <para>1 = Ramp down </para>
+		/// <para>2 = Square wave </para>
+		/// <para>3 = Random (speed is irrelevant) </para>
 		/// </returns>
 		/// <remarks>
 		/// This method is ZERO-BASED. ie) Sample 1 = VibratoWaveformType(0)

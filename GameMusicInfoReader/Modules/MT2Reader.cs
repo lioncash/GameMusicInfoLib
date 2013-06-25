@@ -24,6 +24,23 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
+		/// The header identifier of this MT2 module.
+		/// </summary>
+		public string HeaderID
+		{
+			get
+			{
+				// Ensure we start at the beginning of the stream.
+				mtt.Position = 0;
+
+				byte[] magicBytes = new byte[4];
+				mtt.Read(magicBytes, 0, magicBytes.Length);
+
+				return Encoding.UTF8.GetString(magicBytes);
+			}
+		}
+
+		/// <summary>
 		/// The name of the tracker that the module was created in.
 		/// </summary>
 		public string TrackerName
@@ -39,8 +56,7 @@ namespace GameMusicInfoReader.Modules
 				mtt.Read(trackerName, 0, 32);
 
 				// Convert retrieved bytes into a string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(trackerName);
+				return Encoding.UTF8.GetString(trackerName);
 			}
 		}
 
@@ -60,8 +76,7 @@ namespace GameMusicInfoReader.Modules
 				mtt.Read(trackerName, 0, 64);
 
 				// Convert retrieved bytes into a string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(trackerName);
+				return Encoding.UTF8.GetString(trackerName);
 			}
 		}
 

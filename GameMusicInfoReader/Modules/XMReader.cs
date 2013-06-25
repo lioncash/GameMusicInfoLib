@@ -37,8 +37,7 @@ namespace GameMusicInfoReader.Modules
 				xm.Read(magic, 0, 17);
 
 				// Convert bytes to a string.
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(magic);
+				return Encoding.UTF8.GetString(magic);
 			}
 		}
 
@@ -57,8 +56,7 @@ namespace GameMusicInfoReader.Modules
 				xm.Read(moduleName, 0, 20);
 
 				// Convert bytes to a string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(moduleName);
+				return Encoding.UTF8.GetString(moduleName);
 			}
 		}
 
@@ -78,8 +76,7 @@ namespace GameMusicInfoReader.Modules
 				xm.Read(trackerName, 0, 20);
 
 				// Convert bytes to a string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(trackerName);
+				return Encoding.UTF8.GetString(trackerName);
 			}
 		}
 

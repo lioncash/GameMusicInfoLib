@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 namespace GameMusicInfoReader.Modules
 {
@@ -22,6 +23,23 @@ namespace GameMusicInfoReader.Modules
 		{
 			ams = File.OpenRead(path);
 			br = new BinaryReader(ams);
+		}
+
+		/// <summary>
+		/// The header identifier string.
+		/// </summary>
+		public string HeaderID
+		{
+			get
+			{
+				// Ensure we start at the beginning of the stream.
+				ams.Position = 0;
+
+				byte[] magicBytes = new byte[7];
+				ams.Read(magicBytes, 0, magicBytes.Length);
+
+				return Encoding.UTF8.GetString(magicBytes);
+			}
 		}
 
 		/// <summary>

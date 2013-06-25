@@ -35,8 +35,7 @@ namespace GameMusicInfoReader
 				spc.Read(magic, 0, 33);
 
 				// Convert bytes to a string
-				UTF8Encoding encoding = new UTF8Encoding();
-				return encoding.GetString(magic);
+				return Encoding.UTF8.GetString(magic);
 			}
 		}
 
@@ -92,8 +91,7 @@ namespace GameMusicInfoReader
 					spc.Read(songName, 0, 32);
 
 					// Convert bytes to a string
-					UTF8Encoding encoding = new UTF8Encoding();
-					return encoding.GetString(songName);
+					return Encoding.UTF8.GetString(songName);
 				}
 
 				// No info chunk
@@ -119,8 +117,7 @@ namespace GameMusicInfoReader
 					spc.Read(gameTitle, 0, 32);
 
 					// Convert bytes to a string.
-					UTF8Encoding encoding = new UTF8Encoding();
-					return encoding.GetString(gameTitle);
+					return Encoding.UTF8.GetString(gameTitle);
 				}
 				
 				// No info chunk
@@ -146,8 +143,7 @@ namespace GameMusicInfoReader
 					spc.Read(dumperName, 0, 16);
 
 					// Convert bytes to a string
-					UTF8Encoding encoding = new UTF8Encoding();
-					return encoding.GetString(dumperName);
+					return Encoding.UTF8.GetString(dumperName);
 				}
 
 				// No info chunk.
@@ -170,8 +166,7 @@ namespace GameMusicInfoReader
 					spc.Read(comment, 0, 32);
 
 					// Convert bytes to a string
-					UTF8Encoding encoding = new UTF8Encoding();
-					return encoding.GetString(comment);
+					return Encoding.UTF8.GetString(comment);
 				}
 
 				// No info chunk.
@@ -198,8 +193,7 @@ namespace GameMusicInfoReader
 					spc.Read(dumpDate, 0, 11);
 
 					// Convert bytes to a string.
-					UTF8Encoding encoding = new UTF8Encoding();
-					return encoding.GetString(dumpDate);
+					return Encoding.UTF8.GetString(dumpDate);
 				}
 
 				// No info chunk
@@ -226,8 +220,7 @@ namespace GameMusicInfoReader
 					spc.Read(playFade, 0, 3);
 
 					// Convert bytes to a string
-					UTF8Encoding encoding = new UTF8Encoding();
-					return encoding.GetString(playFade);
+					return Encoding.UTF8.GetString(playFade);
 				}
 				return "No ID666 Tag Present in SPC file. Cannot get fade in milliseconds.";	
 			}
@@ -251,8 +244,7 @@ namespace GameMusicInfoReader
 					spc.Read(artist, 0, 32);
 
 					// Convert bytes to string.
-					UTF8Encoding encoding = new UTF8Encoding();
-					return encoding.GetString(artist);
+					return Encoding.UTF8.GetString(artist);
 				}
 
 				// No info chunk
