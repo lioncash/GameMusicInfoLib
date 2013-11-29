@@ -152,26 +152,15 @@ namespace GameMusicInfoReader
 			{
 				byte[] playbackBytes = new byte[2];
 
-				// Seek 110 bytes in.
-				nsf.Seek(0x6E, SeekOrigin.Begin);
-
-				// Read 2 bytes
-				nsf.Read(playbackBytes, 0, 2);
-
-				// If it's a PAL NSF file.
-				if (!IsNTSC)
+				if (IsNTSC)
 				{
-					// Clear contents of array
-					Array.Clear(playbackBytes, 0, playbackBytes.Length);
-
-					// Seek 120 (0x78) bytes in
-					nsf.Seek(0x78, SeekOrigin.Begin);
-
-					// Read 2 bytes
+					nsf.Seek(0x6E, SeekOrigin.Begin);
 					nsf.Read(playbackBytes, 0, 2);
-
-					// Return ticks (for PAL)
-					return playbackBytes[0] | (playbackBytes[1] << 8);
+				}
+				else // PAL
+				{
+					nsf.Seek(0x78, SeekOrigin.Begin);
+					nsf.Read(playbackBytes, 0, 2);
 				}
 
 				// Return ticks (for NTSC)
