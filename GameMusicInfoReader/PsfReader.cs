@@ -43,7 +43,7 @@ namespace GameMusicInfoReader
 				bool endOfStream = (fs.BaseStream.Position == fs.BaseStream.Length);
 				if (!endOfStream && new string(fs.ReadChars(5)) == "[TAG]")
 				{
-					// Now read all of the file.
+					// Now read in the metadata
 					this.tag = new string(fs.ReadChars((int)(fs.BaseStream.Length - fs.BaseStream.Position)));
 
 					// Check for "_lib[n]" tags
