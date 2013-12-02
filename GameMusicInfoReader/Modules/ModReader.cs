@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -7,12 +6,9 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for getting info from Protracker MOD modules.
 	/// </summary>
-	public sealed class ModReader : IDisposable
+	public sealed class ModReader
 	{
 		// TODO: More info?
-
-		// Filestream representing a MOD module.
-		private readonly FileStream mod;
 
 		/// <summary>
 		/// Constructor
@@ -20,7 +16,23 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="path">The path to the MOD module.</param>
 		public ModReader(string path)
 		{
-			mod = File.OpenRead(path);
+			using (FileStream mod = File.OpenRead(path))
+			{
+				// Song title
+				byte[] songTitle = new byte[20];
+				mod.Read(songTitle, 0, songTitle.Length);
+				SongTitle = Encoding.UTF8.GetString(songTitle);
+
+				// Song length
+				mod.Seek(0x3B6, SeekOrigin.Begin);
+				SongLength = mod.ReadByte();
+
+				// Module ID
+				byte[] modId = new byte[4];
+				mod.Seek(0x438, SeekOrigin.Begin);
+				mod.Read(modId, 0, modId.Length);
+				ModuleID = Encoding.UTF8.GetString(modId);
+			}
 		}
 
 		/// <summary>
@@ -28,18 +40,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string SongTitle
 		{
-			get
-			{
-				byte[] songTitle = new byte[20];
-
-				// Ensure we're at the beginning of the module.
-				mod.Seek(0, SeekOrigin.Begin);
-				// Read first 20 bytes
-				mod.Read(songTitle, 0, 20);
-
-				// Convert retrieved bytes into a string
-				return Encoding.UTF8.GetString(songTitle);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -47,14 +49,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int SongLength
 		{
-			get
-			{
-				// Seek 950 bytes (0x3B6) in
-				mod.Seek(0x3B6, SeekOrigin.Begin);
-
-				// Read one byte
-				return mod.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -66,36 +62,8 @@ namespace GameMusicInfoReader.Modules
 		/// </remarks>
 		public string ModuleID
 		{
-			get
-			{
-				byte[] moduleid = new byte[4];
-
-				// Seek 1080 bytes (0x438) in
-				mod.Seek(0x438, SeekOrigin.Begin);
-
-				// Read 4 bytes
-				mod.Read(moduleid, 0, 4);
-
-				// Convert retrieved bytes into a string
-				return Encoding.UTF8.GetString(moduleid);
-			}
+			get;
+			private set;
 		}
-
-		#region IDisposable Methods
-
-		public void Dispose()
-		{
-			Dispose(true);
-		}
-
-		private void Dispose(bool disposing)
-		{
-			if (disposing)
-			{
-				mod.Dispose();
-			}
-		}
-
-		#endregion
 	}
 }

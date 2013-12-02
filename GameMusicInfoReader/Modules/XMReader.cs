@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -7,18 +6,55 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for XM module files
 	/// </summary>
-	public sealed class XMReader : IDisposable
+	public sealed class XMReader
 	{
-		// Filstream representing an XM module.
-		private readonly FileStream xm;
-
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="path">Path to an XM module.</param>
 		public XMReader(string path)
 		{
-			xm = File.OpenRead(path);
+			using (BinaryReader xm = new BinaryReader(File.OpenRead(path)))
+			{
+				// Header
+				byte[] header = new byte[17];
+				xm.Read(header, 0, header.Length);
+				HeaderID = Encoding.UTF8.GetString(header);
+
+				// Module name
+				byte[] moduleName = new byte[20];
+				xm.Read(moduleName, 0, moduleName.Length);
+				ModuleName = Encoding.UTF8.GetString(moduleName);
+
+				// Module tracker
+				xm.BaseStream.Position += 1; // Skip garbage byte
+				byte[] moduleTracker = new byte[20];
+				xm.Read(moduleTracker, 0, moduleTracker.Length);
+				ModuleTracker = Encoding.UTF8.GetString(moduleTracker);
+
+				// Song length
+				xm.BaseStream.Seek(0x40, SeekOrigin.Begin);
+				SongLength = xm.ReadUInt16();
+
+				// Restart position
+				RestartPosition = xm.ReadUInt16();
+
+				// Totals
+				TotalChannels = xm.ReadUInt16();
+				TotalPatterns = xm.ReadUInt16();
+				TotalInstruments = xm.ReadUInt16();
+
+				// Flags
+				int freqType = xm.ReadInt16() & 0xFF;
+				if ((freqType & 1) != 0)
+					FreqTableType = 1;
+				else
+					FreqTableType = 0;
+
+				// Defaults
+				DefaultTempo = xm.ReadUInt16();
+				DefaultBPM = xm.ReadUInt16();
+			}
 		}
 
 		/// <summary>
@@ -26,19 +62,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string HeaderID
 		{
-			get
-			{
-				byte[] magic = new byte[17];
-
-				// Ensure we start at the beginning of the file.
-				xm.Seek(0, SeekOrigin.Begin);
-
-				// Read 17 bytes
-				xm.Read(magic, 0, 17);
-
-				// Convert bytes to a string.
-				return Encoding.UTF8.GetString(magic);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -46,18 +71,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string ModuleName
 		{
-			get
-			{
-				byte[] moduleName = new byte[20];
-
-				// Seek 17 bytes in
-				xm.Seek(0x11, SeekOrigin.Begin);
-				// Read 20 bytes
-				xm.Read(moduleName, 0, 20);
-
-				// Convert bytes to a string
-				return Encoding.UTF8.GetString(moduleName);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -65,19 +80,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string ModuleTracker
 		{
-			get
-			{
-				byte[] trackerName = new byte[20];
-
-				// Seek 38 bytes in
-				xm.Seek(0x26, SeekOrigin.Begin);
-
-				// Read 20 bytes
-				xm.Read(trackerName, 0, 20);
-
-				// Convert bytes to a string
-				return Encoding.UTF8.GetString(trackerName);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -85,51 +89,47 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int SongLength
 		{
-			get
-			{
-				// Seek 64 bytes in
-				xm.Seek(0x40, SeekOrigin.Begin);
-				return xm.ReadByte();
-			}
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Restart position
+		/// </summary>
+		public int RestartPosition
+		{
+			get;
+			private set;
 		}
 
 		/// <summary>
 		/// The totoal number of channels in the XM file.
 		/// </summary>
+		/// <remarks>Max of 32 channels</remarks>
 		public int TotalChannels
 		{
-			get
-			{
-				// Seek 68 bytes in
-				xm.Seek(0x44, SeekOrigin.Begin);
-				return xm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
 		/// The total number of patterns in the XM file
 		/// </summary>
+		/// <remarks>Max of 256 patterns</remarks>
 		public int TotalPatterns
 		{
-			get
-			{
-				// Seek 70 bytes in
-				xm.Seek(0x46, SeekOrigin.Begin);
-				return xm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
 		/// The total number of instruments in the XM file
 		/// </summary>
+		/// <remarks>Maximum of 128 instruments</remarks>
 		public int TotalInstruments
 		{
-			get
-			{
-				// Seek 72 bytes in
-				xm.Seek(0x48, SeekOrigin.Begin);
-				return xm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -140,24 +140,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int FreqTableType
 		{
-			get
-			{
-				// Make sure stream is left open
-				using (BinaryReader br = new BinaryReader(xm, Encoding.Default, true))
-				{
-					// Seek 74 bytes in 
-					br.BaseStream.Seek(0x4A, SeekOrigin.Begin);
-
-					// Read short but only get lower 8 bytes
-					int value = br.ReadInt16() & 0xFF;
-
-					// If bit 0 is set
-					if ((value & 1) != 0)
-						return 1; // Linear frequency table is used
-					else
-						return 0; // Amiga frequency table is used
-				}
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -165,12 +149,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int DefaultTempo
 		{
-			get
-			{
-				// Seek 76 bytes in
-				xm.Seek(0x4C, SeekOrigin.Begin);
-				return xm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -178,29 +158,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int DefaultBPM
 		{
-			get
-			{
-				// Seek 78 bytes
-				xm.Seek(0x4E, SeekOrigin.Begin);
-				return xm.ReadByte();
-			}
+			get;
+			private set;
 		}
-
-		#region IDisposable Methods
-
-		public void Dispose()
-		{
-			Dispose(true);
-		}
-
-		private void Dispose(bool disposing)
-		{
-			if (disposing)
-			{
-				xm.Dispose();
-			}
-		}
-
-		#endregion
 	}
 }

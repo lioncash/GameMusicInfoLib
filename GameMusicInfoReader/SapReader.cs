@@ -14,7 +14,7 @@ namespace GameMusicInfoReader
 		/// <param name="path">Path to the SAP file</param>
 		public SapReader(string path)
 		{
-			string file = File.ReadAllText(path, Encoding.ASCII);
+			string file = File.ReadAllText(path, Encoding.UTF8);
 
 			SongTitle     = GetInfo(file, "NAME").Replace("\"", "");
 			Artist        = GetInfo(file, "AUTHOR").Replace("\"", "");

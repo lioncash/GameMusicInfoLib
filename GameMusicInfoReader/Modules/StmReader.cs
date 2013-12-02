@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -7,12 +6,9 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for getting info from ScreamTracker 2.x modules.
 	/// </summary>
-	public sealed class StmReader : IDisposable
+	public sealed class StmReader
 	{
 		// TODO: Get instrument information
-
-		// Filestream that represents an STM module
-		private readonly FileStream stm;
 
 		/// <summary>
 		/// Constructor
@@ -20,7 +16,31 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="path">Path to an STM module</param>
 		public StmReader(string path)
 		{
-			stm = File.OpenRead(path);
+			using (FileStream stm = File.OpenRead(path))
+			{
+				// Song name
+				byte[] songName = new byte[20];
+				stm.Read(songName, 0, songName.Length);
+				SongName = Encoding.UTF8.GetString(songName);
+
+				// Tracker name
+				byte[] trackerName = new byte[8];
+				stm.Read(trackerName, 0, trackerName.Length);
+				TrackerName = Encoding.UTF8.GetString(trackerName);
+
+				// Filetype
+				FileType = stm.ReadByte();
+
+				// Tempo
+				stm.Seek(0x20, SeekOrigin.Begin);
+				Tempo = stm.ReadByte();
+
+				// Total patterns
+				TotalPatterns = stm.ReadByte();
+
+				// Global volume
+				GlobalVolume = stm.ReadByte();
+			}
 		}
 
 		/// <summary>
@@ -28,18 +48,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string SongName
 		{
-			get
-			{
-				byte[] songName = new byte[20];
-
-				// Make sure we start at the beginning of the file.
-				stm.Seek(0, SeekOrigin.Begin);
-				// Read 20 bytes
-				stm.Read(songName, 0, 20);
-
-				// Convert retrieved bytes into a string
-				return Encoding.UTF8.GetString(songName);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -47,19 +57,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string TrackerName
 		{
-			get
-			{
-				byte[] trackerName = new byte[8];
-
-				// Seek 20 (0x14) bytes in
-				stm.Seek(0x14, SeekOrigin.Begin);
-
-				// Read 8 bytes
-				stm.Read(trackerName, 0, 8);
-
-				// Convert retrieved bytes into a string
-				return Encoding.UTF8.GetString(trackerName);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -71,18 +70,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int FileType
 		{
-			get
-			{
-				// Seek 29 (0x1D) bytes in
-				stm.Seek(0x1D, SeekOrigin.Begin);
-
-				// If it returns 2, then it's a module
-				if (stm.ReadByte() == 2)
-					return 2;
-
-				// If it returns 1, then it's a song
-				return 1;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -90,13 +79,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int Tempo
 		{
-			get
-			{
-				// Seek 32 (0x20) bytes in
-				stm.Seek(0x20, SeekOrigin.Begin);
-
-				return stm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -104,13 +88,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalPatterns
 		{
-			get
-			{
-				// Seek 33 (0x21) bytes in
-				stm.Seek(0x21, SeekOrigin.Begin);
-
-				return stm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -118,30 +97,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int GlobalVolume
 		{
-			get
-			{
-				// Seek 34 (0x22) bytes in
-				stm.Seek(0x22, SeekOrigin.Begin);
-
-				return stm.ReadByte();
-			}
+			get;
+			private set;
 		}
-
-		#region IDisposable Methods
-
-		public void Dispose()
-		{
-			Dispose(true);
-		}
-
-		private void Dispose(bool disposing)
-		{
-			if (disposing)
-			{
-				stm.Dispose();
-			}
-		}
-
-		#endregion
 	}
 }

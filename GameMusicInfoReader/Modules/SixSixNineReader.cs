@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -7,18 +6,33 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// A reader for getting info from 669 modules.
 	/// </summary>
-	public sealed class SixSixNineReader : IDisposable
+	public sealed class SixSixNineReader
 	{
-		// Filestream representing a 669 module.
-		private readonly FileStream ssn;
-
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="path">Path to the 669 module.</param>
 		public SixSixNineReader(string path)
 		{
-			ssn = File.OpenRead(path);
+			using (FileStream ssn = File.OpenRead(path))
+			{
+				// Header
+				byte[] header = new byte[2];
+				ssn.Read(header, 0, header.Length);
+				HeaderID = Encoding.UTF8.GetString(header);
+
+				// Comment
+				byte[] comment = new byte[108];
+				ssn.Read(comment, 0, comment.Length);
+				Comment = Encoding.UTF8.GetString(comment);
+
+				// Totals
+				TotalSamples = ssn.ReadByte();
+				TotalPatterns = ssn.ReadByte();
+
+				// Loop order
+				LoopOrder = ssn.ReadByte();
+			}
 		}
 
 		/// <summary>
@@ -30,18 +44,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string HeaderID
 		{
-			get
-			{
-				byte[] magic = new byte[2];
-
-				// Make sure we start at the beginning of the module.
-				ssn.Seek(0, SeekOrigin.Begin);
-				// Read 2 bytes
-				ssn.Read(magic, 0, 2);
-
-				// Convert retrieved bytes into a string
-				return Encoding.UTF8.GetString(magic);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -49,19 +53,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string Comment
 		{
-			get
-			{
-				byte[] commentBytes = new byte[108];
-
-				// Seek 2 bytes in
-				ssn.Seek(2, SeekOrigin.Begin);
-
-				// Read 108 bytes
-				ssn.Read(commentBytes, 0, 108);
-
-				// Convert retrieved bytes into a string
-				return Encoding.UTF8.GetString(commentBytes);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -71,13 +64,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalSamples
 		{
-			get
-			{
-				// Seek 110 (0x6E) bytes in
-				ssn.Seek(0x6E, SeekOrigin.Begin);
-
-				return ssn.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -87,13 +75,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalPatterns
 		{
-			get
-			{
-				// Seek 111 (0x6F) bytes in
-				ssn.Seek(0x6F, SeekOrigin.Begin);
-
-				return ssn.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -101,30 +84,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int LoopOrder
 		{
-			get
-			{
-				// Seek 112 (0x70) bytes in
-				ssn.Seek(0x70, SeekOrigin.Begin);
-
-				return ssn.ReadByte();
-			}
+			get;
+			private set;
 		}
-
-		#region IDisposable Methods
-
-		public void Dispose()
-		{
-			Dispose(true);
-		}
-
-		private void Dispose(bool disposing)
-		{
-			if (disposing)
-			{
-				ssn.Dispose();
-			}
-		}
-
-		#endregion
 	}
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -7,12 +6,9 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for getting info from Polytracker PTM modules.
 	/// </summary>
-	public sealed class PtmReader : IDisposable
+	public sealed class PtmReader
 	{
 		// TODO: Read sample information
-
-		// Filestream representing a PTM module
-		private readonly FileStream ptm;
 
 		/// <summary>
 		/// Constructor
@@ -20,7 +16,24 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="path">The path to the PTM module</param>
 		public PtmReader(string path)
 		{
-			ptm = File.OpenRead(path);
+			using (BinaryReader ptm = new BinaryReader(File.OpenRead(path)))
+			{
+				// Song name
+				byte[] songName = new byte[28];
+				ptm.Read(songName, 0, songName.Length);
+				SongName = Encoding.UTF8.GetString(songName);
+
+				// Totals
+				ptm.BaseStream.Seek(0x20, SeekOrigin.Begin);
+				TotalOrders = ptm.ReadUInt16();
+				TotalInstruments = ptm.ReadUInt16();
+				TotalPatterns = ptm.ReadUInt16();
+				Channels = ptm.ReadUInt16();
+
+				// Panning
+				ptm.BaseStream.Seek(0x40, SeekOrigin.Begin);
+				Panning = ptm.ReadByte();
+			}
 		}
 
 		/// <summary>
@@ -28,18 +41,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string SongName
 		{
-			get
-			{
-				byte[] songName = new byte[28];
-
-				//Ensure we start at the beginning of the module.
-				ptm.Seek(0, SeekOrigin.Begin);
-				// Read 28 bytes
-				ptm.Read(songName, 0, 28);
-
-				// Convert retrieved bytes into a string
-				return Encoding.UTF8.GetString(songName);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -48,13 +51,8 @@ namespace GameMusicInfoReader.Modules
 		/// <remarks>File can have between 1-256 orders</remarks>
 		public int TotalOrders
 		{
-			get
-			{
-				// Seek 32 (0x20) bytes in
-				ptm.Seek(0x20, SeekOrigin.Begin);
-
-				return ptm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -63,13 +61,8 @@ namespace GameMusicInfoReader.Modules
 		/// <remarks>Can have between 1 to 255 instruments</remarks>
 		public int TotalInstruments
 		{
-			get
-			{
-				// Seek 34 (0x22) bytes in
-				ptm.Seek(0x22, SeekOrigin.Begin);
-
-				return ptm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -78,13 +71,8 @@ namespace GameMusicInfoReader.Modules
 		/// <remarks>Can have between 1 to 128 patterns</remarks>
 		public int TotalPatterns
 		{
-			get
-			{
-				// Seek 36 (0x24) bytes in
-				ptm.Seek(0x24, SeekOrigin.Begin);
-
-				return ptm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -93,13 +81,8 @@ namespace GameMusicInfoReader.Modules
 		/// <remarks>Can have between 1 to 32 channels</remarks>
 		public int Channels
 		{
-			get
-			{
-				// Seek 38 (0x26) bytes in
-				ptm.Seek(0x26, SeekOrigin.Begin);
-
-				return ptm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -114,30 +97,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int Panning
 		{
-			get
-			{
-				// Seek 64 (0x40) bytes in
-				ptm.Seek(0x40, SeekOrigin.Begin);
-
-				return ptm.ReadByte();
-			}
+			get;
+			private set;
 		}
-
-		#region IDisposable Methods
-
-		public void Dispose()
-		{
-			Dispose(true);
-		}
-
-		private void Dispose(bool disposing)
-		{
-			if (disposing)
-			{
-				ptm.Dispose();
-			}
-		}
-
-		#endregion
 	}
 }

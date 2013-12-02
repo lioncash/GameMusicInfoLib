@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -7,13 +6,9 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// A reader for getting info from ExtremeTracker modules.
 	/// </summary>
-	public sealed class AmsReader : IDisposable
+	public sealed class AmsReader
 	{
 		// TODO: Retrieving comments, sample info, etc
-
-		// Filestream representing an AMS module
-		private readonly FileStream ams;
-		private readonly BinaryReader br;
 
 		/// <summary>
 		/// Constructor
@@ -21,8 +16,26 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="path">Path to an AMS module.</param>
 		public AmsReader(string path)
 		{
-			ams = File.OpenRead(path);
-			br = new BinaryReader(ams);
+			using (BinaryReader br = new BinaryReader(File.OpenRead(path)))
+			{
+				// Header
+				byte[] header = new byte[7];
+				br.Read(header, 0, header.Length);
+				HeaderID = Encoding.UTF8.GetString(header);
+
+				// Num samples
+				br.BaseStream.Seek(0xA, SeekOrigin.Begin);
+				TotalSamples = br.ReadByte();
+
+				// Num Patterns
+				TotalPatterns = br.ReadUInt16();
+
+				// Num positions
+				TotalPositions = br.ReadUInt16();
+
+				// Num virtual midi channels
+				TotalVirtualMidiChannels = br.ReadUInt16();
+			}
 		}
 
 		/// <summary>
@@ -30,92 +43,48 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string HeaderID
 		{
-			get
-			{
-				// Ensure we start at the beginning of the stream.
-				ams.Position = 0;
-
-				byte[] magicBytes = new byte[7];
-				ams.Read(magicBytes, 0, magicBytes.Length);
-
-				return Encoding.UTF8.GetString(magicBytes);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
-		/// The total amount of samples stored
-		/// within the AMS module.
+		/// The total amount of samples stored within
+		/// this AMS module (can be from 1-255).
 		/// </summary>
 		public int TotalSamples
 		{
-			get
-			{
-				// Seek 10 (0xA) bytes in
-				ams.Seek(0xA, SeekOrigin.Begin);
-
-				return ams.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
-		/// The total amount of patterns stored within the module
+		/// The total amount of patterns stored within 
+		/// this module (can be from 1-65535).
 		/// </summary>
 		public int TotalPatterns
 		{
-			get
-			{
-				// Seek 11 (0xB) bytes in
-				br.BaseStream.Seek(0xB, SeekOrigin.Begin);
-
-				return br.ReadUInt16();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
-		/// The total number of positions within the module
+		/// The total number of positions within
+		/// this module (can be from 1-65535).
 		/// </summary>
 		public int TotalPositions
 		{
-			get
-			{
-				// Seek 13 (0xD) bytes in
-				br.BaseStream.Seek(0xD, SeekOrigin.Begin);
-
-				return br.ReadUInt16();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
-		/// The number of virtual MIDI channels within the module
+		/// The number of virtual MIDI channels within
+		/// this module (can be from 0-31)
 		/// </summary>
 		public int TotalVirtualMidiChannels
 		{
-			get
-			{
-				// Seek 15 (0xF) bytes in
-				ams.Seek(0xF, SeekOrigin.Begin);
-
-				return ams.ReadByte();
-			}
+			get;
+			private set;
 		}
-
-		#region IDisposable Methods
-
-		// Make sure BinaryReader cleans up properly.
-		public void Dispose()
-		{
-			Dispose(true);
-		}
-
-		private void Dispose(bool disposing)
-		{
-			if (disposing)
-			{
-				br.Close();
-				br.Dispose();
-			}
-		}
-
-		#endregion
 	}
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -7,18 +6,46 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for Disorder Tracker 2 modules
 	/// </summary>
-	public sealed class PlmReader : IDisposable
+	public sealed class PlmReader
 	{
-		// Filestream representing a PLM module.
-		private readonly FileStream plm;
-
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="path">Path to a PLM module</param>
 		public PlmReader(string path)
 		{
-			plm = File.OpenRead(path);
+			using (FileStream plm = File.OpenRead(path))
+			{
+				// Header
+				byte[] header = new byte[4];
+				plm.Read(header, 0, header.Length);
+				HeaderID = Encoding.UTF8.GetString(header);
+				HeaderSize = plm.ReadByte();
+
+				// Song name
+				byte[] songName = new byte[48];
+				plm.Read(songName, 0, songName.Length);
+				SongName = Encoding.UTF8.GetString(songName);
+
+				// Total channels
+				TotalChannels = plm.ReadByte();
+
+				// Max Slide Volume
+				plm.Seek(0x38, SeekOrigin.Begin);
+				MaxSlideVolume = plm.ReadByte();
+
+				// Soundblaster amp
+				SoundblasterAmplification = plm.ReadByte();
+
+				// Initials
+				InitialBPM = plm.ReadByte();
+				InitialSpeed = plm.ReadByte();
+
+				// Totals
+				TotalSamples = plm.ReadByte();
+				TotalPatterns = plm.ReadByte();
+				TotalOrders = plm.ReadByte();
+			}
 		}
 
 		/// <summary>
@@ -26,16 +53,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string HeaderID
 		{
-			get
-			{
-				// Ensure we start at the beginning of the stream.
-				plm.Position = 0;
-
-				byte[] magicBytes = new byte[4];
-				plm.Read(magicBytes, 0, magicBytes.Length);
-
-				return Encoding.UTF8.GetString(magicBytes);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -43,13 +62,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int HeaderSize
 		{
-			get
-			{
-				// Seek 5 (0x5) bytes in
-				plm.Seek(0x5, SeekOrigin.Begin);
-
-				return plm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -58,19 +72,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string SongName
 		{
-			get
-			{
-				byte[] songName = new byte[48];
-
-				// Seek 6 bytes in
-				plm.Seek(0x6, SeekOrigin.Begin);
-
-				// Read 48 bytes
-				plm.Read(songName, 0, 48);
-
-				// Convert to string
-				return Encoding.UTF8.GetString(songName);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -78,13 +81,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalChannels
 		{
-			get
-			{
-				// Seek 54 (0x36) bytes in
-				plm.Seek(0x36, SeekOrigin.Begin);
-
-				return plm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -92,13 +90,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int MaxSlideVolume
 		{
-			get
-			{
-				// Seek 56 (0x38) bytes in
-				plm.Seek(0x38, SeekOrigin.Begin);
-
-				return plm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -107,13 +100,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int SoundblasterAmplification
 		{
-			get
-			{
-				// Seek 57 (0x39) bytes in
-				plm.Seek(0x39, SeekOrigin.Begin);
-
-				return plm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -121,13 +109,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int InitialBPM
 		{
-			get
-			{
-				// Seek 58 (0x3A) bytes in
-				plm.Seek(0x3A, SeekOrigin.Begin);
-
-				return plm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -135,13 +118,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int InitialSpeed
 		{
-			get
-			{
-				// Seek 59 (0x3B) bytes in
-				plm.Seek(0x3B, SeekOrigin.Begin);
-
-				return plm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -149,13 +127,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalSamples
 		{
-			get
-			{
-				// Seek 92 (0x5C) bytes in
-				plm.Seek(0x5C, SeekOrigin.Begin);
-
-				return plm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -163,13 +136,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalPatterns
 		{
-			get
-			{
-				// Seek 93 (0x5D) bytes in
-				plm.Seek(0x5D, SeekOrigin.Begin);
-
-				return plm.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -177,30 +145,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalOrders
 		{
-			get
-			{
-				// Seek 94 (0x5E) bytes in
-				plm.Seek(0x5E, SeekOrigin.Begin);
-
-				return plm.ReadByte();
-			}
+			get;
+			private set;
 		}
-
-		#region IDisposable Methods
-
-		public void Dispose()
-		{
-			Dispose(true);
-		}
-
-		private void Dispose(bool disposing)
-		{
-			if (disposing)
-			{
-				plm.Dispose();
-			}
-		}
-
-		#endregion
 	}
 }

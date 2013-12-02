@@ -1,15 +1,14 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace GameMusicInfoReader
 {
 	/// <summary>
 	/// A class for reading files that are based off of the Playstation PSF format.
 	/// </summary>
-	public sealed class PsfReader : IDisposable
+	public sealed class PsfReader
 	{
 		// A filestream that represents an xSF file.
-		private readonly FileStream xsf;
+		private readonly string file;
 
 		/// <summary>
 		/// Constructor
@@ -17,7 +16,19 @@ namespace GameMusicInfoReader
 		/// <param name="path">Path to the PSF file</param>
 		public PsfReader(string path)
 		{
-			xsf = File.OpenRead(path);
+			this.file = File.ReadAllText(path);
+
+			Artist     = GetInfo("artist=");
+			Game       = GetInfo("game=");
+			SongTitle  = GetInfo("title=");
+			Genre      = GetInfo("genre=");
+			Copyright  = GetInfo("copyright=");
+			Year       = GetInfo("year=");
+			Comment    = GetInfo("comment=");
+			XSFRipper  = GetXSFRipper(path);
+			Volume     = GetInfo("volume=");
+			Length     = GetInfo("length=");
+			FadeLength = GetInfo("fade=");
 		}
 
 		/// <summary>
@@ -25,10 +36,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string Artist
 		{
-			get
-			{
-				return GetInfo("artist=");
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -36,10 +45,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string Game
 		{
-			get
-			{
-				return GetInfo("game=");
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -47,43 +54,80 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string SongTitle
 		{
-			get
-			{
-				return GetInfo("title=");
-			}
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Genre of the game
+		/// </summary>
+		public string Genre
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// The copyright of the song within the xSF file
+		/// </summary>
+		public string Copyright
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// The year the track within the xSF file was released
+		/// </summary>
+		public string Year
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Any comments left in the xSF file.
+		/// Can be non-existent.
+		/// </summary>
+		public string Comment
+		{
+			get;
+			private set;
 		}
 
 		/// <summary>
 		/// The name/info of the person who ripped
 		/// the xSF file
 		/// </summary>
-		public string xsfRipper
+		public string XSFRipper
 		{
-			get
-			{
-				// Ignore case and don't care about the culture
-				if (xsf.Name.EndsWith("psf", true, null) 
-				|| xsf.Name.EndsWith("psf2", true, null) 
-				|| xsf.Name.EndsWith("minipsf", true, null) 
-				|| xsf.Name.EndsWith("minipsf2", true, null))
-					return GetInfo("psfby=");
+			get;
+			private set;
+		}
+		private  string GetXSFRipper(string path)
+		{
+			// Ignore case and don't care about the culture
+			if (path.EndsWith("psf", true, null) 
+			|| path.EndsWith("psf2", true, null) 
+			|| path.EndsWith("minipsf", true, null) 
+			|| path.EndsWith("minipsf2", true, null))
+				return GetInfo("psfby=");
 				
-				if (xsf.Name.EndsWith("gsf", true, null)
-				|| xsf.Name.EndsWith("minigsf", true, null))
-					return GetInfo("gsfby=");
+			if (path.EndsWith("gsf", true, null)
+			|| path.EndsWith("minigsf", true, null))
+				return GetInfo("gsfby=");
 				
-				if (xsf.Name.EndsWith("usf", true, null) 
-				|| xsf.Name.EndsWith("miniusf", true, null))
-					return GetInfo("usfby=");
+			if (path.EndsWith("usf", true, null) 
+			|| path.EndsWith("miniusf", true, null))
+				return GetInfo("usfby=");
 				
-				if (xsf.Name.EndsWith("2sf", true, null)
-				|| xsf.Name.EndsWith("mini2sf", true, null))
-					return GetInfo("2sfby=");
+			if (path.EndsWith("2sf", true, null)
+			|| path.EndsWith("mini2sf", true, null))
+				return GetInfo("2sfby=");
 
-				// This should never be returned, but is
-				// here just in case.
-				return "Not implemented for xSF file yet";
-			}
+			// This should never be returned, but is
+			// here just in case.
+			return "N/A";
 		}
 
 		/// <summary>
@@ -92,34 +136,23 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string Volume
 		{
-			get
-			{
-				return GetInfo("volume=");
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
 		/// The length of the song
-		/// 
 		/// <remarks>
-		///
 		/// It can be in one of the following formats:
-		/// <para/>
-		/// seconds.decimal
-		/// <para/>
-		/// minutes:seconds.decimal
-		/// <para/>
-		/// hours:minutes:seconds.decimal
-		/// 
+		/// <para>seconds.decimal</para>
+		/// <para>minutes:seconds.decimal</para>
+		/// <para>hours:minutes:seconds.decimal</para>
 		/// </remarks>
-		/// 
 		/// </summary>
 		public string Length
 		{
-			get
-			{
-				return GetInfo("length=");
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -138,44 +171,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string FadeLength
 		{
-			get
-			{
-				return GetInfo("fade=");
-			}
-		}
-
-		/// <summary>
-		/// The copyright of the song within the xSF file
-		/// </summary>
-		public string Copyright
-		{
-			get
-			{
-				return GetInfo("copyright=");
-			}
-		}
-
-		/// <summary>
-		/// The year the track within the xSF file was released
-		/// </summary>
-		public string Year
-		{
-			get
-			{
-				return GetInfo("year=");
-			}
-		}
-
-		/// <summary>
-		/// Any comments left in the xSF file.
-		/// Can be non-existent.
-		/// </summary>
-		public string Comment
-		{
-			get
-			{
-				return GetInfo("comment=");
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -203,22 +200,17 @@ namespace GameMusicInfoReader
 		/// <returns>The desired information string (assuming it's present within the file.</returns>
 		private string GetInfo(string indexOf)
 		{
-			StreamReader sr = new StreamReader(xsf.Name);
-			
-			// Read the entire file to the end
-			string entireFile = sr.ReadToEnd();
-
 			// Get the index of the indexOf tag so we know where to start
 			// within the file for getting the desired metadata.
-			int index = entireFile.IndexOf(indexOf);
+			int index = file.IndexOf(indexOf);
 
 			// Error handling in case a tag isn't present in a file
 			if (index == -1)
-				return "Tag not present within file";
+				return "N/A";
 
 			// Get a new string (substring) of the entire original string.
 			// this shortens up things for us.
-			string news = entireFile.Substring(index);
+			string news = file.Substring(index);
 
 			// Get the first occurrence of the 0xA character.
 			// This signifies the end of a tag
@@ -228,23 +220,5 @@ namespace GameMusicInfoReader
 			// It also removes the part of the string that is the 'indexOf' parameter
 			return news.Substring(0, nullIndex).Remove(0, indexOf.Length);
 		}
-
-		#region IDisposable Methods
-
-		public void Dispose()
-		{
-			Dispose(true);
-		}
-
-		private void Dispose(bool disposing)
-		{
-			if (disposing)
-			{
-				if (xsf != null)
-					xsf.Dispose();
-			}
-		}
-
-		#endregion
 	}
 }
