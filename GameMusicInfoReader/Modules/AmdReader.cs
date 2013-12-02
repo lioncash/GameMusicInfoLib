@@ -25,12 +25,9 @@ namespace GameMusicInfoReader.Modules
 				amd.Read(info, 0, 24);
 				Artist = Encoding.UTF8.GetString(info);
 
-				// Song length
+				// Song length & total patterns
 				amd.Seek(0x3A4, SeekOrigin.Begin);
 				SongLength = amd.ReadByte();
-
-				// Total patterns
-				amd.Seek(0x3A5, SeekOrigin.Begin);
 				TotalPatterns = amd.ReadByte();
 
 				// Version
