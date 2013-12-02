@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader.Modules
@@ -7,18 +6,37 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// A reader for getting info from AMusic AMD files.
 	/// </summary>
-	public sealed class AmdReader : IDisposable
+	public sealed class AmdReader
 	{
-		// A Filestream representing an AMD module.
-		private readonly FileStream amd;
-
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="path">The path to the AMD module.</param>
 		public AmdReader(string path)
 		{
-			amd = File.OpenRead(path);
+			using (FileStream amd = File.OpenRead(path))
+			{
+				// Song name
+				byte[] info = new byte[24];
+				amd.Read(info, 0, 24);
+				SongName = Encoding.UTF8.GetString(info);
+
+				// Artist name
+				amd.Read(info, 0, 24);
+				Artist = Encoding.UTF8.GetString(info);
+
+				// Song length
+				amd.Seek(0x3A4, SeekOrigin.Begin);
+				SongLength = amd.ReadByte();
+
+				// Total patterns
+				amd.Seek(0x3A5, SeekOrigin.Begin);
+				TotalPatterns = amd.ReadByte();
+
+				// Version
+				amd.Seek(0x42F, SeekOrigin.Begin);
+				Version = amd.ReadByte();
+			}
 		}
 
 		/// <summary>
@@ -26,18 +44,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string SongName
 		{
-			get
-			{
-				byte[] songName = new byte[24];
-
-				//Ensure we start at the beginning of the module.
-				amd.Seek(0, SeekOrigin.Begin);
-				// Read 18 bytes
-				amd.Read(songName, 0, 24);
-
-				// Convert retrieved bytes into a string
-				return Encoding.UTF8.GetString(songName);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -45,19 +53,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string Artist
 		{
-			get
-			{
-				byte[] songName = new byte[24];
-
-				// Seek 24 bytes in
-				amd.Seek(24, SeekOrigin.Begin);
-
-				// Read 20 bytes
-				amd.Read(songName, 0, 24);
-
-				// Convert retrieved bytes into a string
-				return Encoding.UTF8.GetString(songName);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -65,13 +62,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int SongLength
 		{
-			get
-			{
-				// Seek 932 bytes in
-				amd.Seek(0x3A4, SeekOrigin.Begin);
-
-				return amd.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -79,13 +71,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalPatterns
 		{
-			get
-			{
-				// Seek 933 bytes in
-				amd.Seek(0x3A5, SeekOrigin.Begin);
-
-				return amd.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -95,30 +82,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int Version
 		{
-			get
-			{
-				// Seek 1071 bytes in
-				amd.Seek(0x42F, SeekOrigin.Begin);
-
-				return amd.ReadByte();
-			}
+			get;
+			private set;
 		}
-
-		#region IDisposable Methods
-
-		public void Dispose()
-		{
-			Dispose(true);
-		}
-
-		public void Dispose(bool disposing)
-		{
-			if (disposing)
-			{
-				amd.Dispose();
-			}
-		}
-
-		#endregion
 	}
 }
