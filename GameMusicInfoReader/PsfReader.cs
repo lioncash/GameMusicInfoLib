@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 // TODO: Support multiline tags
@@ -44,6 +45,9 @@ namespace GameMusicInfoReader
 				{
 					// Now read all of the file.
 					this.tag = new string(fs.ReadChars((int)(fs.BaseStream.Length - fs.BaseStream.Position)));
+
+					// Check for "_lib[n]" tags
+					ReferencedLibs = ParseIncludedLibs();
 
 					// Actual tag metadata
 					Artist     = GetInfo("artist=");
@@ -254,6 +258,21 @@ namespace GameMusicInfoReader
 		}
 
 		/// <summary>
+		/// The number of xSF drivers referenced.
+		/// (ie. paths from variables _lib[n] in the
+		/// metadata.
+		/// </summary>
+		/// <remarks>
+		/// Note that this provides the relative paths to the
+		/// xSF driver files, not the absolute path.
+		/// </remarks>
+		public List<string> ReferencedLibs
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
 		/// Retrieves information specified by the indexOf string.
 		/// <para/>
 		/// xSF Files store their metadata as a raw text string, thus, this makes
@@ -304,6 +323,29 @@ namespace GameMusicInfoReader
 			{
 				return news.Remove(0, indexOf.Length);
 			}
+		}
+
+		// Parses the metadata for "_lib[n]" (where [n] = positive num) tags
+		// Basically it retrieves the relative location of the xSF driver files.
+		private List<string> ParseIncludedLibs()
+		{
+			List<string> res = new List<string>();
+
+			// TODO: Possibly improve this somehow
+			using (StringReader sr = new StringReader(tag))
+			{
+				string line;
+				while ((line = sr.ReadLine()) != null)
+				{
+					if (line.Contains("_lib") && line.IndexOf('=') != -1)
+					{
+						// We only want the string on the right side of the '='.
+						res.Add(line.Split('=')[1]);
+					}
+				}
+			}
+
+			return res;
 		}
 	}
 }
