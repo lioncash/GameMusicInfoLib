@@ -1,23 +1,32 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
+using System.Text;
 
 namespace GameMusicInfoReader
 {
 	/// <summary>
 	/// Reader for Atari SAP files
 	/// </summary>
-	public sealed class SapReader : IDisposable
+	public sealed class SapReader
 	{
-		// Filestream that represents an Atari SAP file.
-		private readonly FileStream sap;
-
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="path">Path to the SAP file</param>
 		public SapReader(string path)
 		{
-			sap = File.OpenRead(path);
+			string file = File.ReadAllText(path, Encoding.ASCII);
+
+			SongTitle     = GetInfo(file, "NAME").Replace("\"", "");
+			Artist        = GetInfo(file, "AUTHOR").Replace("\"", "");
+			Date          = GetInfo(file, "DATE").Replace("\"", "");
+			SongLength    = GetInfo(file, "TIME").Replace("\"", "");
+			InitAddress   = GetInfo(file, "INIT");
+			FastPlay      = GetInfo(file, "FASTPLAY");
+			PlayerType    = GetInfo(file, "TYPE");
+			PlayerAddress = GetInfo(file, "PLAYER");
+			IsNtsc        = (GetInfo(file, "NTSC") != "Tag not present within file");
+			IsStereo      = (GetInfo(file, "STEREO") != "Tag not present within file");
+
 		}
 
 		/// <summary>
@@ -25,10 +34,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string SongTitle
 		{
-			get
-			{
-				return GetInfo("NAME").Replace("\"", "");
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -36,10 +43,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string Artist
 		{
-			get
-			{
-				return GetInfo("AUTHOR").Replace("\"", "");
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -47,10 +52,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string Date
 		{
-			get
-			{
-				return GetInfo("DATE").Replace("\"", "");
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -58,10 +61,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string SongLength
 		{
-			get
-			{
-				return GetInfo("TIME").Replace("\"", "");
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -69,10 +70,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string InitAddress
 		{
-			get
-			{
-				return GetInfo("INIT");
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -80,10 +79,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string FastPlay
 		{
-			get
-			{
-				return GetInfo("FASTPLAY");
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -91,10 +88,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string PlayerType
 		{
-			get
-			{
-				return GetInfo("TYPE");
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -102,10 +97,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string PlayerAddress
 		{
-			get
-			{
-				return GetInfo("PLAYER");
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -113,14 +106,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public bool IsNtsc
 		{
-			get
-			{
-				// NTSC tag isnt present, therefore it's PAL
-				if (GetInfo("NTSC") == "Tag not present within file")
-					return false;
-
-				return true;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -128,30 +115,18 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public bool IsStereo
 		{
-			get
-			{
-				// Tag isn't present, therefore it's mono
-				if (GetInfo("STEREO") == "Tag not present within file")
-					return false;
-
-				return true;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
 		/// Parses tags the same way the method in PSFReader does.
 		/// </summary>
-		private string GetInfo(string indexOf)
+		private static string GetInfo(string contents, string indexOf)
 		{
-			// Get a streamreader so we can read the file into a string
-			StreamReader reader = new StreamReader(sap.Name);
-
-			// Read the entire file to the end
-			string entireFile = reader.ReadToEnd();
-
 			// Get the index of the indexOf tag so we know where to start
 			// within the file for getting the desired metadata.
-			int index = entireFile.IndexOf(indexOf);
+			int index = contents.IndexOf(indexOf);
 
 			// Error handling in case a tag isn't present in a file
 			if (index == -1)
@@ -159,7 +134,7 @@ namespace GameMusicInfoReader
 
 			// Get a new string (substring) of the entire original string.
 			// this shortens up things for us.
-			string news = entireFile.Substring(index);
+			string news = contents.Substring(index);
 
 			// Get the first occurrence of the 0xA character.
 			// This signifies the end of a tag
@@ -169,23 +144,5 @@ namespace GameMusicInfoReader
 			// It also removes the part of the string that is the 'indexOf' parameter
 			return news.Substring(0, nullIndex).Remove(0, indexOf.Length);
 		}
-
-		#region IDisposable Methods
-
-		public void Dispose()
-		{
-			Dispose(true);
-		}
-
-		private void Dispose(bool disposing)
-		{
-			if (disposing)
-			{
-				if (sap != null)
-					sap.Dispose();
-			}
-		}
-
-		#endregion
 	}
 }
