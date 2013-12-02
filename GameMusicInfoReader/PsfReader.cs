@@ -104,7 +104,7 @@ namespace GameMusicInfoReader
 			get;
 			private set;
 		}
-		private  string GetXSFRipper(string path)
+		private string GetXSFRipper(string path)
 		{
 			// Ignore case and don't care about the culture
 			if (path.EndsWith("psf", true, null) 
@@ -112,15 +112,31 @@ namespace GameMusicInfoReader
 			|| path.EndsWith("minipsf", true, null) 
 			|| path.EndsWith("minipsf2", true, null))
 				return GetInfo("psfby=");
-				
+
+			if (path.EndsWith("dsf", true, null)
+			|| path.EndsWith("minidsf", true, null))
+				return GetInfo("dsfby=");
+
 			if (path.EndsWith("gsf", true, null)
 			|| path.EndsWith("minigsf", true, null))
 				return GetInfo("gsfby=");
-				
+
+			if (path.EndsWith("qsf", true, null)
+			|| path.EndsWith("miniqsf", true, null))
+				return GetInfo("qsfby=");
+
+			if (path.EndsWith("ssf", true, null)
+			|| path.EndsWith("minissf", true, null))
+				return GetInfo("ssfby=");
+
+			if (path.EndsWith("snsf", true, null)
+			|| path.EndsWith("minisnsf", true, null))
+				return GetInfo("snsfby=");
+
 			if (path.EndsWith("usf", true, null) 
 			|| path.EndsWith("miniusf", true, null))
 				return GetInfo("usfby=");
-				
+
 			if (path.EndsWith("2sf", true, null)
 			|| path.EndsWith("mini2sf", true, null))
 				return GetInfo("2sfby=");
