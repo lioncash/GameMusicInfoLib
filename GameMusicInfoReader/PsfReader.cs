@@ -1,5 +1,7 @@
 ﻿using System.IO;
+using System.Text;
 
+// TODO: Support multiline tags
 namespace GameMusicInfoReader
 {
 	/// <summary>
@@ -7,8 +9,8 @@ namespace GameMusicInfoReader
 	/// </summary>
 	public sealed class PsfReader
 	{
-		// A filestream that represents an xSF file.
-		private readonly string file;
+		// Represents the tag data
+		private readonly string tag;
 
 		/// <summary>
 		/// Constructor
@@ -16,19 +18,79 @@ namespace GameMusicInfoReader
 		/// <param name="path">Path to the PSF file</param>
 		public PsfReader(string path)
 		{
-			this.file = File.ReadAllText(path);
+			using (BinaryReader fs = new BinaryReader(File.OpenRead(path)))
+			{
+				// Header ID
+				byte[] headerId = new byte[3];
+				fs.Read(headerId, 0, 3);
+				HeaderID = Encoding.UTF8.GetString(headerId);
 
-			Artist     = GetInfo("artist=");
-			Game       = GetInfo("game=");
-			SongTitle  = GetInfo("title=");
-			Genre      = GetInfo("genre=");
-			Copyright  = GetInfo("copyright=");
-			Year       = GetInfo("year=");
-			Comment    = GetInfo("comment=");
-			XSFRipper  = GetXSFRipper(path);
-			Volume     = GetInfo("volume=");
-			Length     = GetInfo("length=");
-			FadeLength = GetInfo("fade=");
+				// Skip version byte (don't care)
+				fs.BaseStream.Position += 1;
+
+				// Reserved area length and compressed data length
+				int resLen  = fs.ReadInt32();
+				int dataLen = fs.ReadInt32();
+
+				// CRC32 of the data
+				CRC32 = fs.ReadUInt32();
+
+				// Skip those lengths, we don't read any of this.
+				fs.BaseStream.Position += (resLen + dataLen);
+
+				// Check if we have any metadata, and read it if we do.
+				bool endOfStream = (fs.BaseStream.Position == fs.BaseStream.Length);
+				if (!endOfStream && new string(fs.ReadChars(5)) == "[TAG]")
+				{
+					// Now read all of the file.
+					this.tag = new string(fs.ReadChars((int)(fs.BaseStream.Length - fs.BaseStream.Position)));
+
+					// Actual tag metadata
+					Artist     = GetInfo("artist=");
+					Game       = GetInfo("game=");
+					SongTitle  = GetInfo("title=");
+					Genre      = GetInfo("genre=");
+					Copyright  = GetInfo("copyright=");
+					Year       = GetInfo("year=");
+					Comment    = GetInfo("comment=");
+					XSFRipper  = GetXSFRipper(path);
+					Volume     = GetInfo("volume=");
+					Length     = GetInfo("length=");
+					FadeLength = GetInfo("fade=");
+				}
+				else
+				{
+					Artist     = "N/A";
+					Game       = "N/A";
+					SongTitle  = "N/A";
+					Genre      = "N/A";
+					Copyright  = "N/A";
+					Year       = "N/A";
+					Comment    = "N/A";
+					XSFRipper  = "N/A";
+					Volume     = "N/A";
+					Length     = "N/A";
+					FadeLength = "N/A";
+				}
+			}
+		}
+
+		/// <summary>
+		/// Header ID string
+		/// </summary>
+		public string HeaderID
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// CRC32 of the program data after compression
+		/// </summary>
+		public uint CRC32
+		{
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -218,7 +280,7 @@ namespace GameMusicInfoReader
 		{
 			// Get the index of the indexOf tag so we know where to start
 			// within the file for getting the desired metadata.
-			int index = file.IndexOf(indexOf);
+			int index = tag.IndexOf(indexOf);
 
 			// Error handling in case a tag isn't present in a file
 			if (index == -1)
@@ -226,7 +288,7 @@ namespace GameMusicInfoReader
 
 			// Get a new string (substring) of the entire original string.
 			// this shortens up things for us.
-			string news = file.Substring(index);
+			string news = tag.Substring(index);
 
 			// Get the first occurrence of the 0xA character.
 			// This signifies the end of a tag
@@ -234,7 +296,14 @@ namespace GameMusicInfoReader
 
 			// Perform another substring. This cuts off all text after the 0xA character.
 			// It also removes the part of the string that is the 'indexOf' parameter
-			return news.Substring(0, nullIndex).Remove(0, indexOf.Length);
+			if (nullIndex != -1)
+			{
+				return news.Substring(0, nullIndex).Remove(0, indexOf.Length);
+			}
+			else
+			{
+				return news.Remove(0, indexOf.Length);
+			}
 		}
 	}
 }
