@@ -1,18 +1,14 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text;
+using GameMusicInfoReader.Util;
 
 namespace GameMusicInfoReader
 {
 	/// <summary>
-	/// A reader for Commodore 64 SID files.
+	/// A reader for Commodore 64 SID files (assumes V2+).
 	/// </summary>
-	public sealed class SidReader : IDisposable
+	public sealed class SidReader
 	{
-		// Filestream representing the SID file.
-		private readonly FileStream sid;
-		// Reader that helps with reading bytes.
-		private readonly BinaryReader br;
 		
 		/// <summary>
 		/// Constructor
@@ -20,8 +16,55 @@ namespace GameMusicInfoReader
 		/// <param name="path">File path to the SID file.</param>
 		public SidReader(string path)
 		{
-			sid = File.OpenRead(path);
-			br = new BinaryReader(sid);
+			using (BinaryReader sid = new BinaryReader(File.OpenRead(path)))
+			{
+				// Get some flag values beforehand
+				// Video standard/chip model/BASIC flag
+				sid.BaseStream.Seek(0x76, SeekOrigin.Begin);
+				short flag = Endian.SwapInt16(sid.ReadInt16());
+				VideoStandard = GetVideoStandard(flag);
+				ChipModel = GetChipModel(flag);
+				IsBasicFlagSet = BasicFlagIsSet(flag);
+				sid.BaseStream.Seek(0x00, SeekOrigin.Begin);
+
+				// Header
+				byte[] header = new byte[4];
+				sid.Read(header, 0, header.Length);
+				HeaderID = Encoding.UTF8.GetString(header);
+
+				// Version number (Shift because big-endian)
+				Version = Endian.SwapInt16(sid.ReadInt16());
+
+				// Offset to C64 binary data
+				DataOffset = Endian.SwapInt16(sid.ReadInt16());
+
+				// Addresses
+				LoadAddress = GetLoadAddress(sid);
+				InitAddress = GetInitAddress(sid);
+				PlayAddress = GetPlayAddress(sid);
+
+				// Songs
+				Songs = Endian.SwapInt16(sid.ReadInt16());
+				StartSong = Endian.SwapInt16(sid.ReadInt16());
+
+				// Speed integer
+				Speed = Endian.SwapInt32(sid.ReadInt32());
+
+				// Song title
+				char[] songTitle = new char[32];
+				sid.Read(songTitle, 0, songTitle.Length);
+				SongTitle = new string(songTitle);
+
+				// Artist
+				char[] artist = new char[32];
+				sid.Read(artist, 0, artist.Length);
+				Artist = new string(artist);
+
+				// Copyright
+				char[] copyright = new char[32];
+				sid.Read(copyright, 0, copyright.Length);
+				Copyright = new string(copyright);
+			}
 		}
 
 		/// <summary>
@@ -31,18 +74,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string HeaderID
 		{
-			get
-			{
-				byte[] magic = new byte[4];
-
-				// Make sure we seek to the beginning of the file
-				sid.Seek(0, SeekOrigin.Begin);
-				// Read 4 bytes
-				sid.Read(magic, 0, 4);
-
-				// Convert bytes to string
-				return Encoding.UTF8.GetString(magic);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -50,12 +83,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public int Version
 		{
-			get
-			{
-				// Seek 5 bytes in.
-				br.BaseStream.Seek(5, SeekOrigin.Begin);
-				return br.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -63,39 +92,17 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public int DataOffset
 		{
-			get
-			{
-				if (Version == 1)
-					return 0x0076;
-				else // Must be version 2 then.
-					return 0x007C;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
 		/// The C64 memory location (in decimal) to put the C64 data
 		/// </summary>
-		public int LoadAddress
+		public short LoadAddress
 		{
-			get
-			{
-				// Seek 8 bytes in
-				br.BaseStream.Seek(8, SeekOrigin.Begin);
-
-				short tempLoadAddr = br.ReadInt16();
-
-				// Looks like the data is stored in the original C64 data format.
-				// We have to read the first two bytes of data to get the address.
-				if (tempLoadAddr == 0)
-				{
-					// Seek to the C64 data 
-					br.BaseStream.Seek(DataOffset, SeekOrigin.Begin);
-					return br.ReadInt16();
-				}
-				
-				// Not stored in original C64 format
-				return tempLoadAddr;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -103,41 +110,10 @@ namespace GameMusicInfoReader
 		/// <br/>
 		/// If the Init Address is 0, then it is the same as the load address.
 		/// </summary>
-		public int InitAddress
+		public short InitAddress
 		{
-			get
-			{
-				// Seek 10 bytes in
-				br.BaseStream.Seek(0xA, SeekOrigin.Begin);
-				short temp = br.ReadInt16();
-				
-				// Init address must be zero for RSID files with the BASIC flag set
-				if (HeaderID.Contains("RSID") && BasicFlagIsSet())
-					return 0;
-
-				// If temp is zero, then InitAddress = LoadAddress
-				if (temp == 0)
-					return LoadAddress;
-				else
-					return temp;
-			}
-		}
-
-		/// <summary>
-		/// The number of songs (or sound-effects) that can be initialized
-		/// by calling the init address. Minimum is 1, maximum is 256.
-		/// </summary>
-		public int Songs
-		{
-			get
-			{
-				// Seek 14 bytes
-				br.BaseStream.Seek(0xE, SeekOrigin.Begin);
-				
-				// TODO: Do we shift here? Seems correct, but I'm not sure.
-				// Get only the higher bits.
-				return br.ReadInt16() >> 8;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -149,12 +125,45 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public int PlayAddress
 		{
-			get
-			{
-				// Seek 12 bytes
-				br.BaseStream.Seek(0xC, SeekOrigin.Begin);
-				return br.ReadInt16();
-			}
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// The number of songs (or sound-effects) that can be initialized
+		/// by calling the init address. Minimum is 1, maximum is 256.
+		/// </summary>
+		public int Songs
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// The song number to be played by default. This value is optional. It often
+		/// specifies the first song you would hear upon starting the program it has
+		/// been taken from. It has a default of 1.
+		/// </summary>
+		public int StartSong
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Each bit in 'speed' specifies the speed
+		/// for the corresponding tune number, i.e. bit 0 specifies the speed for tune 1.
+		/// If there are more than 32 tunes, the speed specified for tune 32 is also used
+		/// for all higher numbered tunes.
+		/// </summary>
+		/// <remarks>
+		/// <para>Surplus bits in 'speed' should be set to 0.</para>
+		/// <para>For RSID files 'speed' must always be set to 0</para>
+		/// </remarks>
+		public int Speed
+		{
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -162,18 +171,17 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string SongTitle
 		{
-			get
-			{
-				byte[] songTitle = new byte[32];
+			get;
+			private set;
+		}
 
-				// Seek 22 bytes
-				sid.Seek(0x16, SeekOrigin.Begin);
-				// Read the song title.
-				sid.Read(songTitle, 0, 32);
-
-				// Convert bytes to a string.
-				return Encoding.UTF8.GetString(songTitle);
-			}
+		/// <summary>
+		/// Artist of the track
+		/// </summary>
+		public string Artist
+		{
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -181,19 +189,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string Copyright
 		{
-			get
-			{
-				byte[] copyright = new byte[32];
-
-				// Seek 86 bytes
-				sid.Seek(0x86, SeekOrigin.Begin);
-
-				// Read 32 bytes.
-				sid.Read(copyright, 0, 32);
-
-				// Convert bytes to a string
-				return Encoding.UTF8.GetString(copyright);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -203,34 +200,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string VideoStandard
 		{
-			get
-			{
-				// Seek 118 bytes
-				br.BaseStream.Seek(0x76, SeekOrigin.Begin);
-
-				// Read a short, but only get the upper 8 bytes
-				int value = br.ReadInt16() >> 8;
-
-				// If bit 2 is set, but bit 3 isn't
-				if ((value & 4) != 0 && (value & 8) == 0)
-				{
-					return "PAL";
-				}
-				// if bit 2 isn't set, but bit 3 is
-				else if ((value & 4) == 0 && (value & 8) != 0)
-				{
-					return "NTSC";
-				}
-				// if both bit 2 and 3 aren't set
-				else if ((value & 4) != 0 && (value & 8) != 0)
-				{
-					return "PAL and NTSC";
-				}
-				else
-				{
-					return "Unknown";
-				}
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -238,73 +209,111 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string ChipModel
 		{
-			get
-			{
-				// Seek 118 bytes in.
-				br.BaseStream.Seek(0x76, SeekOrigin.Begin);
+			get;
+			private set;
+		}
 
-				// Read short, but only get upper 8 bytes.
-				int value = br.ReadInt16() >> 8;
-
-				// If bit 4 is set, but bit 5 isn't
-				if ((value & 16) != 0 && (value & 32) == 0)
-				{
-					return "MOS6581";
-				}
-				// If bit 4 isn't set, but bit 5 is
-				else if ((value & 16) == 0 && (value & 32) != 0)
-				{
-					return "MOS8580";
-				}
-				// If both bit 4 and 5 are set
-				else if ((value & 16) != 0 && (value & 32) != 0)
-				{
-					return "MOS6581 and MOS8580";
-				}
-				else
-				{
-					return "Unknown";
-				}
-			}
+		/// <summary>
+		/// Whether or not the BASIC flag is set.
+		/// </summary>
+		public bool IsBasicFlagSet
+		{
+			get;
+			set;
 		}
 
 		// Checks if the BASIC flag is set for RSID files.
-		private bool BasicFlagIsSet()
+		private static bool BasicFlagIsSet(short value)
 		{
-			// Seek 118 bytes in.
-			br.BaseStream.Seek(0x76, SeekOrigin.Begin);
+			return ((value & 2) != 0);
+		}
 
-			// Read short, but only get upper 8 bytes.
-			int value = br.ReadInt16() >> 8;
+		private short GetLoadAddress(BinaryReader sid)
+		{
+			short tempLoadAddr = Endian.SwapInt16(sid.ReadInt16());
 
-			// If the flag is set.
-			if ((value & 2) != 0)
+			// Looks like the data is stored in the original C64 data format.
+			// We have to read the first two bytes of data to get the address.
+			if (tempLoadAddr == 0)
 			{
-				return true;
+				long tempPos = sid.BaseStream.Position;
+
+				// Seek to the C64 data 
+				sid.BaseStream.Seek(DataOffset, SeekOrigin.Begin);
+				short res = sid.ReadInt16();
+				sid.BaseStream.Seek(tempPos, SeekOrigin.Begin);
+
+				return res;
 			}
-			else // Flag isn't set
+
+			// Not stored in original C64 format
+			return tempLoadAddr;
+		}
+
+		private short GetInitAddress(BinaryReader sid)
+		{
+			short temp = Endian.SwapInt16(sid.ReadInt16());
+
+			// Init address must be zero for RSID files with the BASIC flag set
+			if (HeaderID.Contains("RSID") && IsBasicFlagSet)
+				return 0;
+
+			// If temp is zero, then InitAddress = LoadAddress
+			if (temp == 0)
+				return LoadAddress;
+			else
+				return temp;
+		}
+
+		private static short GetPlayAddress(BinaryReader sid)
+		{
+			return Endian.SwapInt16(sid.ReadInt16());
+		}
+
+		private static string GetVideoStandard(short value)
+		{
+			// If bit 2 is set, but bit 3 isn't
+			if ((value & 4) != 0 && (value & 8) == 0)
 			{
-				return false;
+				return "PAL";
+			}
+			// if bit 2 isn't set, but bit 3 is
+			else if ((value & 4) == 0 && (value & 8) != 0)
+			{
+				return "NTSC";
+			}
+			// if both bit 2 and 3 aren't set
+			else if ((value & 4) != 0 && (value & 8) != 0)
+			{
+				return "PAL and NTSC";
+			}
+			else
+			{
+				return "Unknown";
 			}
 		}
 
-		#region IDisposable Methods
-
-		// Make sure the binary reader cleans up properly
-		public void Dispose()
+		private static string GetChipModel(short value)
 		{
-			Dispose(true);
-		}
-
-		private void Dispose(bool disposing)
-		{
-			if (disposing)
+			// If bit 4 is set, but bit 5 isn't
+			if ((value & 16) != 0 && (value & 32) == 0)
 			{
-				br.Close();
-				br.Dispose();
+				return "MOS6581";
+			}
+			// If bit 4 isn't set, but bit 5 is
+			else if ((value & 16) == 0 && (value & 32) != 0)
+			{
+				return "MOS8580";
+			}
+			// If both bit 4 and 5 are set
+			else if ((value & 16) != 0 && (value & 32) != 0)
+			{
+				return "MOS6581 and MOS8580";
+			}
+			else
+			{
+				return "Unknown";
 			}
 		}
-
-		#endregion
 	}
 }
