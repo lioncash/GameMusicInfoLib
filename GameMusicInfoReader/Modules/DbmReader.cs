@@ -13,10 +13,6 @@ namespace GameMusicInfoReader.Modules
 	/// </summary>
 	public sealed class DbmReader
 	{
-		// Represents a DBM module.
-		private readonly FileStream dbm;
-		private readonly BinaryReader br;
-
 		private const int NameChunkOffset = 8;
 		private const int NameChunkSize   = 52;
 		private const int InfoChunkSize   = 18;
