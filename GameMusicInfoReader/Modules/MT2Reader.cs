@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -7,12 +7,9 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Reader for getting info from MadTracker 2 modules.
 	/// </summary>
-	public sealed class MT2Reader : IDisposable
+	public sealed class MT2Reader
 	{
 		// TODO: Patterns, Instrument chunk, Automation chunk, Drums
-
-		// Filestream representing an MT2 module.
-		private readonly FileStream mtt;
 
 		/// <summary>
 		/// Constructor
@@ -20,7 +17,56 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="path">The path to an MT2 module.</param>
 		public MT2Reader(string path)
 		{
-			mtt = File.OpenRead(path);
+			using(BinaryReader mtt = new BinaryReader(File.OpenRead(path)))
+			{
+				// Header
+				byte[] header = new byte[4];
+				mtt.Read(header, 0, 4);
+				HeaderID = Encoding.UTF8.GetString(header);
+
+				// Skip 4 bytes (safe to ignore)
+				mtt.BaseStream.Position += 4;
+				
+				// Internal version number.
+				Version = mtt.ReadInt16();
+
+				// Tracker name.
+				byte[] trackerName = new byte[32];
+				mtt.Read(trackerName, 0, 32);
+				TrackerName = Encoding.UTF8.GetString(trackerName);
+
+				// Track title
+				byte[] title = new byte[64];
+				mtt.Read(title, 0, 64);
+				Title = Encoding.UTF8.GetString(title);
+
+				// Totals
+				TotalPositions = mtt.ReadInt16();
+				RestartPosition = mtt.ReadInt16();
+				TotalPatterns = mtt.ReadInt16();
+				TotalTracks = mtt.ReadInt16();
+
+				// Samples/tick
+				SamplesPerTick = mtt.ReadInt16();
+				TicksPerLine = mtt.ReadByte();
+				LinesPerBeat = mtt.ReadByte();
+
+				// Flag conditions
+				int flags = mtt.ReadInt32();
+				if ((flags & 1)  != 0) HasPackedPatterns = true;
+				if ((flags & 2)  != 0) HasAutomation = true;
+				if ((flags & 8)  != 0) HasDrumAutomation = true;
+				if ((flags & 16) != 0) HasMasterAutomation = true;
+
+				// More totals
+				TotalInstruments = mtt.ReadInt16();
+				TotalSamples = mtt.ReadInt16();
+
+				// Now get all of the chunks.
+				TrackInfo = new List<TrackData>();
+				Comments = new List<Message>();
+				EnumerateChunks(mtt);
+			}
 		}
 
 		/// <summary>
@@ -28,16 +74,17 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string HeaderID
 		{
-			get
-			{
-				// Ensure we start at the beginning of the stream.
-				mtt.Position = 0;
+			get;
+			private set;
+		}
 
-				byte[] magicBytes = new byte[4];
-				mtt.Read(magicBytes, 0, magicBytes.Length);
-
-				return Encoding.UTF8.GetString(magicBytes);
-			}
+		/// <summary>
+		/// Internal version number of this MT2 module.
+		/// </summary>
+		public short Version
+		{
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -45,19 +92,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string TrackerName
 		{
-			get
-			{
-				byte[] trackerName = new byte[32];
-
-				// Seek 10 (0xA) bytes in
-				mtt.Seek(0xA, SeekOrigin.Begin);
-
-				// Read 32 bytes
-				mtt.Read(trackerName, 0, 32);
-
-				// Convert retrieved bytes into a string
-				return Encoding.UTF8.GetString(trackerName);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -65,19 +101,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string Title
 		{
-			get
-			{
-				byte[] trackerName = new byte[64];
-
-				// Seek 42 (0x2A) bytes in
-				mtt.Seek(0x2A, SeekOrigin.Begin);
-
-				// Read 64 bytes
-				mtt.Read(trackerName, 0, 64);
-
-				// Convert retrieved bytes into a string
-				return Encoding.UTF8.GetString(trackerName);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -85,13 +110,17 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalPositions
 		{
-			get
-			{
-				// Seek 106 (0x6A) bytes in
-				mtt.Seek(0x6A, SeekOrigin.Begin);
+			get;
+			private set;
+		}
 
-				return mtt.ReadByte();
-			}
+		/// <summary>
+		/// Restart position after finishing playback.
+		/// </summary>
+		public int RestartPosition
+		{
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -99,13 +128,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalPatterns
 		{
-			get
-			{
-				// Seek 110 (0x6E) bytes in
-				mtt.Seek(0x6E, SeekOrigin.Begin);
-
-				return mtt.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -113,13 +137,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalTracks
 		{
-			get
-			{
-				// Seek 112 (0x70) bytes in
-				mtt.Seek(0x70, SeekOrigin.Begin);
-
-				return mtt.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -127,13 +146,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int SamplesPerTick
 		{
-			get
-			{
-				// Seek 114 (0x72) bytes in
-				mtt.Seek(0x72, SeekOrigin.Begin);
-
-				return mtt.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -141,13 +155,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TicksPerLine
 		{
-			get
-			{
-				// Seek 116 (0x74) bytes in
-				mtt.Seek(0x74, SeekOrigin.Begin);
-
-				return mtt.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -155,13 +164,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int LinesPerBeat
 		{
-			get
-			{
-				// Seek 117 (0x75) bytes in
-				mtt.Seek(0x75, SeekOrigin.Begin);
-
-				return mtt.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -169,20 +173,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public bool HasPackedPatterns
 		{
-			get
-			{   
-				// Seek 118 bytes in
-				mtt.Seek(0x76, SeekOrigin.Begin);
-				// Read the flag byte
-				byte flags = (byte) mtt.ReadByte();
-
-				// If bit 0 is set then we have packed patterns
-				if ((flags & 1) != 0)
-					return true;
-					
-				// Bit not set, no packed patterns
-				return false;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -190,20 +182,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public bool HasAutomation
 		{
-			get
-			{
-				// Seek 118 bytes in
-				mtt.Seek(0x76, SeekOrigin.Begin);
-				// Read the flag byte
-				byte flags = (byte)mtt.ReadByte();
-
-				// If bit 1 is set then we have packed patterns
-				if ((flags & 2) != 0)
-					return true;
-
-				// Bit not set, no automation
-				return false;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -211,20 +191,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public bool HasDrumAutomation
 		{
-			get
-			{
-				// Seek 118 bytes in
-				mtt.Seek(0x76, SeekOrigin.Begin);
-				// Read the flag byte
-				byte flags = (byte)mtt.ReadByte();
-
-				// If bit 3 is set then we have drum automation
-				if ((flags & 8) != 0)
-					return true;
-
-				// Bit not set, no drum automation
-				return false;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -232,20 +200,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public bool HasMasterAutomation
 		{
-			get
-			{
-				// Seek 118 bytes in
-				mtt.Seek(0x76, SeekOrigin.Begin);
-				// Read the flag byte
-				byte flags = (byte)mtt.ReadByte();
-
-				// If bit 4 is set then we have drum automation
-				if ((flags & 16) != 0)
-					return true;
-
-				// Bit not set, no drum automation
-				return false;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -253,13 +209,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalInstruments
 		{
-			get
-			{
-				// Seek 122 (0x7A) bytes in
-				mtt.Seek(0x7A, SeekOrigin.Begin);
-
-				return mtt.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -267,13 +218,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalSamples
 		{
-			get
-			{
-				// Seek 124 (0x7C) bytes in
-				mtt.Seek(0x7C, SeekOrigin.Begin);
-
-				return mtt.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		//-- Chunk Parsing --//
@@ -281,118 +227,179 @@ namespace GameMusicInfoReader.Modules
 		//- TRKS chunk -/
 
 		/// <summary>
-		/// The master volume of the track 
+		/// Track information for each track in this MT2 module.
 		/// </summary>
-		public string MasterVolume
+		public List<TrackData> TrackInfo
 		{
-			get
-			{
-				// Get a streamreader so we can read the file into a string
-				StreamReader reader = new StreamReader(mtt.Name);
-
-				// Read the entire file to the end
-				string entireFile = reader.ReadToEnd();
-
-				// Get the index of the string so we know where to start
-				// within the file for getting the desired data.
-				int index = entireFile.IndexOf("TRKS") + 4;
-
-				// Error handling
-				if (index == -1)
-					return "TRKS chunk does not exist. Cannot get value";
-
-				mtt.Seek(index, SeekOrigin.Begin);
-
-				return mtt.ReadByte().ToString();
-			}
-		}
-
-		
-		// -- MSG chunk parsing -- //
-
-		/// <summary>
-		/// The comment embedded in a MT2 file
-		/// </summary>
-		public string Comment
-		{   // NOTE: Would seeking to the start index be faster ?
-			get
-			{
-				// Get a streamreader so we can read the file into a string
-				StreamReader reader = new StreamReader(mtt.Name);
-
-				// Read the file into a string
-				string entireFile = reader.ReadToEnd();
-
-				// Get the start index (when "MSG" is first encountered).
-				// The + 9 is representing extra chars after "MSG" that aren't a part of the main string,
-				// so skip them
-				int startIndex = entireFile.IndexOf("MSG") + 9;
-
-				// Error handling
-				if (startIndex == -1)
-					return "No comment exists within this module";
-
-				// Get the end index (When the next chunk, "SUM", is encountered).
-				// The -2 represents the two empty bytes (0x00) before the "SUM" chunk.
-				// There's no point in printing these, so skip back over them.
-				int endIndex = entireFile.LastIndexOf("SUM") - 2;
-
-				// Overall length of the string
-				int length = (endIndex - startIndex);
-
-				// Return substring containing the comment
-				return entireFile.Substring(startIndex, length);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
-		/// The summary of the comment
+		/// Comments stored within this MT2 module.
 		/// </summary>
-		public string Summary
+		/// <remarks>
+		/// TODO: Is it possible for an MT2 module to have
+		///       more than one comment in it? Documentation doesn't say.
+		/// </remarks>
+		public List<Message> Comments
 		{
-			get
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Summary chunk data
+		/// </summary>
+		public Summary SummaryData
+		{
+			get;
+			private set;
+		}
+
+		// Enumerates the chunk blocks in the module
+		private void EnumerateChunks(BinaryReader br)
+		{
+			// Grab the length of the drum data and skip over it.
+			br.BaseStream.Seek(382, SeekOrigin.Begin);
+			int drumDataLen = br.ReadInt16();
+			br.BaseStream.Position += drumDataLen;
+
+			// Get length of the chunk data.
+			int additionalDataLen = br.ReadInt32();
+
+			// Loop and enumerate chunks
+			while (additionalDataLen > 0)
 			{
-				// Get a streamreader so we can read the file into a string
-				StreamReader reader = new StreamReader(mtt.Name);
+				// Read chunk ID and size
+				string id = new string(br.ReadChars(4));
+				int size = br.ReadInt32();
 
-				// Read the file into a string
-				string entireFile = reader.ReadToEnd();
+				switch (id)
+				{
+					case "TRKS":
+					{
+						TrackData data = new TrackData();
+						data.MasterVolume      = br.ReadInt16();
+						data.TrackVolume       = br.ReadInt16();
+						data.UsingEffectBuffer = br.ReadBoolean();
+						data.OutputTrack       = br.ReadBoolean();
+						data.EffectID          = br.ReadInt16();
+						// NOTE: After effect ID are eight 16-bit ints. These are track params.
+						// We don't read these because they aren't needed.
 
-				// Get the start index (when "SUM" is first encountered).
-				// The +14 is representing extra chars after the "S" in "SUM" 
-				// that aren't a part of the main string, so skip them
-				int startIndex = entireFile.LastIndexOf("SUM") + 14;
+						// Add to the list of track data
+						TrackInfo.Add(data);
 
-				// Error handling
-				if (startIndex == -1)
-					return "No summary exists in this module";
+						// Skip track params
+						br.BaseStream.Position += 16;
+						// Skip rest of track data
+						br.BaseStream.Position += (size - 24); // -24 = taking into account the above read vars.
+						break;
+					}
 
-				// Get the end index (When the next chunk, "TMAP", is encountered).
-				// The -8 represents the eight empty bytes (0x00) before the "TMAP" chunk.
-				// There's no point in printing these, so skip back over them.
-				int endIndex = entireFile.LastIndexOf("TMAP") - 8;
+					case "MSG\0":
+					{
+						Message msg = new Message();
+						msg.ShowComment = br.ReadBoolean();
+						msg.Comment = new string(br.ReadChars(size-1)); // -1 because ShowComment is part of the overall data
 
-				// Overall length of the string
-				int length = (endIndex - startIndex);
+						// Add to overall comments
+						Comments.Add(msg);
+						break;
+					}
 
-				// Return substring containing the comment
-				return entireFile.Substring(startIndex, length);
+					case "SUM\0":
+					{
+						Summary summary = new Summary();
+						br.BaseStream.Position += 6; // Skip the hash, doubt it's needed.
+						summary.Content = new string(br.ReadChars(size-6)); // -6 since the hash is part of the data.
+
+						// Add to property
+						SummaryData = summary;
+						break;
+					}
+
+					default: // Unknown chunk ID
+					{
+						br.BaseStream.Position += size;
+						break;
+					}
+				}
+
+				// Decrement overall size, as we've processed a chunk.
+				additionalDataLen -= (size + 8); // +8 = taking into account the chunk ID and size identifiers.
 			}
 		}
 
-		#region IDisposable Methods
+		#region Chunk Structures
 
-		public void Dispose()
+		/// <summary>
+		/// Track data chunk (TRKS)
+		/// </summary>
+		public struct TrackData
 		{
-			Dispose(true);
+			/// <summary>
+			/// Master volume for the track.
+			/// </summary>
+			public int MasterVolume { get; internal set; }
+
+			/// <summary>
+			/// Track volume
+			/// </summary>
+			public int TrackVolume { get; internal set; }
+
+			/// <summary>
+			/// Whether or not an effect buffer is being used for the track.
+			/// </summary>
+			public bool UsingEffectBuffer { get; internal set; }
+
+			/// <summary>
+			/// Whether or not this track is outputted.
+			/// <para>false = Self</para>
+			/// <para>true = Output track</para>
+			/// </summary>
+			public bool OutputTrack { get; internal set; }
+
+			/// <summary>
+			/// The effect ID for this track.
+			/// </summary>
+			public int EffectID { get; internal set; }
+
+			// NOTE: Technically after the ID is 8 words of individual track params.
+			//       ie. Each param = 2 bytes.
 		}
 
-		private void Dispose(bool disposing)
+		/// <summary>
+		/// Message chunk (MSG) for storing a comment.
+		/// </summary>
+		public struct Message
 		{
-			if (disposing)
-			{
-				mtt.Dispose();
-			}
+			/// <summary>
+			/// Whether or not to display the message (can be ignored, doesn't matter).
+			/// </summary>
+			public bool ShowComment { get; internal set; }
+
+			/// <summary>
+			/// The actual comment.
+			/// </summary>
+			public string Comment { get; internal set; }
+		}
+
+		/// <summary>
+		/// Summary (SUM) chunk
+		/// </summary>
+		public struct Summary
+		{
+			/// <summary>
+			/// Build summary mask
+			/// </summary>
+			public long SummaryMask { get; internal set; }
+
+			/// <summary>
+			/// Build summary content.
+			/// </summary>
+			public string Content { get; internal set; }
 		}
 
 		#endregion
