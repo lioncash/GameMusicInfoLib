@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 
 // TODO: Song chunk reading.
 // TODO: Instrument chunk reading.
@@ -12,7 +11,7 @@ namespace GameMusicInfoReader.Modules
 	/// <summary>
 	/// Class for reading info from Digibooster Pro modules.
 	/// </summary>
-	public sealed class DbmReader : IDisposable
+	public sealed class DbmReader
 	{
 		// Represents a DBM module.
 		private readonly FileStream dbm;
@@ -28,8 +27,36 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="file">Path to the DBM module to open.</param>
 		public DbmReader(string file)
 		{
-			dbm = new FileStream(file, FileMode.Open);
-			br = new BinaryReader(dbm);
+			using (BinaryReader dbm = new BinaryReader(File.OpenRead(file)))
+			{
+				// Header
+				HeaderID = new string(dbm.ReadChars(4));
+
+				// Skip to module name. Also cut off any padded bytes.
+				dbm.BaseStream.Position = 0x10;
+				string modName = new string(dbm.ReadChars(44));
+				ModuleName = modName.Substring(0, modName.LastIndexOf('\0'));
+
+				// Number of instruments.
+				dbm.BaseStream.Position = NameChunkOffset + NameChunkSize + 8; // + 8 is to skip over the chunk name and length indicators.
+				NumInstruments = BitConverter.IsLittleEndian ? dbm.ReadInt16()>>8 : dbm.ReadInt16();
+
+				// Number of samples
+				dbm.BaseStream.Position = NameChunkOffset + NameChunkSize + 10;
+				NumSamples = BitConverter.IsLittleEndian ? dbm.ReadInt16()>>8 : dbm.ReadInt16();
+
+				// Number of songs.
+				dbm.BaseStream.Position = NameChunkOffset + NameChunkSize + 12;
+				NumSongs = BitConverter.IsLittleEndian ? dbm.ReadInt16()>>8 : dbm.ReadInt16();
+
+				// Number of patterns
+				dbm.BaseStream.Position = NameChunkOffset + NameChunkSize + 14;
+				NumPatterns = BitConverter.IsLittleEndian ? dbm.ReadInt16()>>8 : dbm.ReadInt16();
+
+				// Number of channels
+				dbm.BaseStream.Position = NameChunkOffset + NameChunkSize + 16;
+				NumChannels = BitConverter.IsLittleEndian ? dbm.ReadInt16()>>8 : dbm.ReadInt16();
+			}
 		}
 
 		/// <summary>
@@ -37,16 +64,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string HeaderID
 		{
-			get
-			{
-				// Ensure we start from the beginning of the stream.
-				dbm.Position = 0;
-
-				byte[] magicBytes = new byte[4];
-				dbm.Read(magicBytes, 0, magicBytes.Length);
-
-				return Encoding.UTF8.GetString(magicBytes);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -54,20 +73,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string ModuleName
 		{
-			get
-			{
-				// Go 16 bytes in.
-				dbm.Position = 0x10;
-
-				// Maximum number of characters a name can have is 44 characters.
-				// Note that not all of them are required to be used.
-				byte[] nameBytes = new byte[44];
-				dbm.Read(nameBytes, 0, nameBytes.Length);
-
-				// Get the name as a string and cut off any padded bytes.
-				string name = Encoding.UTF8.GetString(nameBytes);
-				return name.Substring(0, name.LastIndexOf((char) 0x00));
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -75,12 +82,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int NumInstruments
 		{
-			get
-			{
-				br.BaseStream.Position = NameChunkOffset + NameChunkSize + 8; // + 8 is to skip over the chunk name and length indicators.
-
-				return br.ReadInt16() >> 8; // Shift because big-endian format.
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -88,12 +91,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int NumSamples
 		{
-			get
-			{
-				br.BaseStream.Position = NameChunkOffset + NameChunkSize + 10;
-
-				return br.ReadInt16() >> 8; // Shift because big-endian format.
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -101,12 +100,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int NumSongs
 		{
-			get
-			{
-				br.BaseStream.Position = NameChunkOffset + NameChunkSize + 12;
-
-				return br.ReadInt16() >> 8; // Shift because big-endian format.
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -114,12 +109,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int NumPatterns
 		{
-			get
-			{
-				br.BaseStream.Position = NameChunkOffset + NameChunkSize + 14;
-
-				return br.ReadInt16() >> 8; // Shift because big-endian format.
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -127,30 +118,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int NumChannels
 		{
-			get
-			{
-				br.BaseStream.Position = NameChunkOffset + NameChunkSize + 16;
-
-				return br.ReadInt16() >> 8; // Shift because big-endian format.
-			}
+			get;
+			private set;
 		}
-
-
-		#region IDisposable Methods
-
-		public void Dispose()
-		{
-			Dispose(true);
-		}
-
-		public void Dispose(bool disposing)
-		{
-			if (disposing)
-			{
-				dbm.Close();
-			}
-		}
-
-		#endregion
 	}
 }
