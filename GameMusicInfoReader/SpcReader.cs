@@ -1,25 +1,34 @@
-﻿using System;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 
 namespace GameMusicInfoReader
 {
 	/// <summary>
 	/// A reader for Super Nintendo SPC files.
 	/// </summary>
-	public sealed class SpcReader : IDisposable
+	public sealed class SpcReader
 	{
-		// Filestream representing the SPC file.
-		private readonly FileStream spc;
-
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="path">Path to a SNES SPC file.</param>
 		public SpcReader(string path)
 		{
-			spc = File.OpenRead(path);
-			GetXid6Tags();
+			using (BinaryReader spc = new BinaryReader(File.OpenRead(path)))
+			{
+				// Header
+				HeaderID = new string(spc.ReadChars(33));
+				spc.BaseStream.Position += 2; // Skip 2 bytes (not needed)
+
+				// ID666 present
+				ID666TagInfoPresent = (spc.ReadByte() == 26);
+
+				// Version
+				Version = spc.ReadByte();
+
+				// Populate tags
+				GetID666Tags(spc);
+				GetXid6Tags(spc);
+			}
 		}
 
 		/// <summary>
@@ -27,16 +36,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string HeaderID
 		{
-			get
-			{
-				byte[] magic = new byte[33];
-
-				// Read 33 bytes to get header magic.
-				spc.Read(magic, 0, 33);
-
-				// Convert bytes to a string
-				return Encoding.UTF8.GetString(magic);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -44,20 +45,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public bool ID666TagInfoPresent
 		{
-			get
-			{
-				// Seek to byte 35
-				spc.Seek(0x23, SeekOrigin.Begin);
-
-				int tagPresent = spc.ReadByte();
-
-				// We have a tag chunk
-				if (tagPresent == 26)
-					return true;
-
-				// No tag chunk present.
-				return false;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -65,12 +54,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public int Version
 		{
-			get
-			{
-				// Seek to byte 36
-				spc.Seek(0x24, SeekOrigin.Begin);
-				return spc.ReadByte();
-			}
+			get;
+			private set;
 		}
 		
 		/// <summary>
@@ -78,25 +63,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string SongName
 		{
-			get
-			{
-				if (ID666TagInfoPresent)
-				{
-					byte[] songName = new byte[32];
-					
-					// Seek to byte 46
-					spc.Seek(0x2E, SeekOrigin.Begin);
-
-					// Read 32 bytes
-					spc.Read(songName, 0, 32);
-
-					// Convert bytes to a string
-					return Encoding.UTF8.GetString(songName);
-				}
-
-				// No info chunk
-				return "No ID666 tag present in SPC file. Cannot get song name.";
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -104,25 +72,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string GameTitle
 		{
-			get
-			{
-				if (ID666TagInfoPresent)
-				{
-					byte[] gameTitle = new byte[32];
-
-					// Seek to byte 78
-					spc.Seek(0x4E, SeekOrigin.Begin);
-
-					// Read 32 bytes
-					spc.Read(gameTitle, 0, 32);
-
-					// Convert bytes to a string.
-					return Encoding.UTF8.GetString(gameTitle);
-				}
-				
-				// No info chunk
-				return "No ID666 tag present in SPC file. Cannot get game title.";
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -130,75 +81,27 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string DumperName
 		{
-			get
-			{
-				if (ID666TagInfoPresent)
-				{
-					byte[] dumperName = new byte[16];
-
-					// Seek to byte 110
-					spc.Seek(0x6E, SeekOrigin.Begin);
-
-					// Read 16 bytes
-					spc.Read(dumperName, 0, 16);
-
-					// Convert bytes to a string
-					return Encoding.UTF8.GetString(dumperName);
-				}
-
-				// No info chunk.
-				return "No ID666 tag present in SPC file. Cannot get dumper name.";
-			}
-		}
-
-		public string Comments
-		{
-			get
-			{
-				if (ID666TagInfoPresent)
-				{
-					byte[] comment = new byte[32];
-
-					// Seek to byte 126
-					spc.Seek(0x7E, SeekOrigin.Begin);
-
-					// Read 32 bytes
-					spc.Read(comment, 0, 32);
-
-					// Convert bytes to a string
-					return Encoding.UTF8.GetString(comment);
-				}
-
-				// No info chunk.
-				return "No ID666 tag present in SPC file. Cannot get comments.";
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
-		/// The date that the SPC file was dumped.<br/>
+		/// Comment string
+		/// </summary>
+		public string Comments
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// The date that the SPC file was dumped.
 		/// Is in the format: MM/DD/YYYY
 		/// </summary>
 		public string DumpDate
 		{
-			get
-			{
-				if (ID666TagInfoPresent)
-				{
-					byte[] dumpDate = new byte[11];
-
-					// Seek to byte 158
-					spc.Seek(0x9E, SeekOrigin.Begin);
-
-					// Read 11 bytes
-					spc.Read(dumpDate, 0, 11);
-
-					// Convert bytes to a string.
-					return Encoding.UTF8.GetString(dumpDate);
-				}
-
-				// No info chunk
-				return "No ID666 tag present in SPC file. Cannot get dump date.";
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -207,23 +110,17 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string SecondsBeforeFade
 		{
-			get
-			{
-				if (ID666TagInfoPresent)
-				{
-					byte[] playFade = new byte[3];
+			get;
+			private set;
+		}
 
-					// Seek to byte 169
-					spc.Seek(0xA9, SeekOrigin.Begin);
-
-					// Read 3 bytes
-					spc.Read(playFade, 0, 3);
-
-					// Convert bytes to a string
-					return Encoding.UTF8.GetString(playFade);
-				}
-				return "No ID666 Tag Present in SPC file. Cannot get fade in milliseconds.";	
-			}
+		/// <summary>
+		/// Length of fade in milliseconds
+		/// </summary>
+		public string FadeLength
+		{
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -231,74 +128,46 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string Artist
 		{
-			get
-			{
-				if (ID666TagInfoPresent)
-				{
-					byte[] artist = new byte[32];
-
-					// Seek 177 bytes in
-					spc.Seek(0xB1, SeekOrigin.Begin);
-					
-					// Read 32 bytes
-					spc.Read(artist, 0, 32);
-
-					// Convert bytes to string.
-					return Encoding.UTF8.GetString(artist);
-				}
-
-				// No info chunk
-				return "No ID666 Tag Present in SPC file. Cannot get artist name.";
-			}
+			get;
+			private set;
 		}
 
-		/// <summary>
-		/// Checks which emulator the SPC was dumped with
-		/// 
-		/// <para/>
-		/// If 0, then it's unknown.
-		/// <para/>
-		/// If 1, then it's ZSNES.
-		/// <para/>
-		/// If 2, then it's Snes9x.
-		/// <para/>
-		/// etc.
-		/// </summary>
-		public string EmulatorDumpedWith
+		#region ID666 Tag Reading
+
+		private void GetID666Tags(BinaryReader spc)
 		{
-			get
+			if (ID666TagInfoPresent)
 			{
-				if (ID666TagInfoPresent)
-				{
-					// Seek to byte 210
-					spc.Seek(0xD2, SeekOrigin.Begin);
+				// Seek to beginning.
+				spc.BaseStream.Seek(0x2E, SeekOrigin.Begin);
 
-					int result = spc.ReadByte();
+				// Read info now
+				SongName          = new string(spc.ReadChars(32));
+				GameTitle         = new string(spc.ReadChars(32));
+				DumperName        = new string(spc.ReadChars(16));
+				Comments          = new string(spc.ReadChars(32));
+				DumpDate          = new string(spc.ReadChars(11));
+				SecondsBeforeFade = new string(spc.ReadChars(3));
+				FadeLength        = new string(spc.ReadChars(5));
+				Artist            = new string(spc.ReadChars(32));
 
-					switch (result)
-					{
-						case 1:
-							return "ZSNES";
-						case 2:
-							return "Snes9x";
-						case 3:
-							return "ZST2SPC";
-						case 4:
-							return "ETC";
-						case 5:
-							return "SNEShout";
-						case 6:
-							return "ZSNESW";
-						default:
-							return "Unknown";
-					}
-				}
-
-				// No info chunk
-				return "No ID666 chunk in SPC file, cannot retrieve emulator used to dump SPC.";
+			}
+			else
+			{
+				SongName          = "N/A";
+				GameTitle         = "N/A";
+				DumperName        = "N/A";
+				Comments          = "N/A";
+				DumpDate          = "N/A";
+				SecondsBeforeFade = "N/A";
+				FadeLength        = "N/A";
+				Artist            = "N/A";
 			}
 		}
 
+		#endregion
+
+		#region XID6 Tag Reading
 
 		//
 		//
@@ -524,30 +393,28 @@ namespace GameMusicInfoReader
 
 		// Gets the Xid6 tags and assigns the results to their
 		// respective properties.
-		private void GetXid6Tags()
+		private void GetXid6Tags(BinaryReader spc)
 		{
-			BinaryReader br = new BinaryReader(spc);
-
 			// Seek to just after the 'xid6' characters in the header.
-			br.BaseStream.Seek(0x10204, SeekOrigin.Begin);
+			spc.BaseStream.Seek(0x10204, SeekOrigin.Begin);
 
 			// XID6 chunk size excluding the header.
-			int xid6ChunkSize = (br.ReadInt32() + 3) & ~3;
+			int xid6ChunkSize = (spc.ReadInt32() + 3) & ~3;
 			
 			// Chunk loop
 			// Each chunk is 4 bytes per header, if we're above or equal to it, chances
 			// are that we still have a tag to read. Length of stream - current position in stream = number of bytes left to read.
 			// if we have less than 4, then there's no more chunks to read.
-			while ((br.BaseStream.Length - br.BaseStream.Position) >= 4)
+			while ((spc.BaseStream.Length - spc.BaseStream.Position) >= 4)
 			{
-				int chunkID = br.ReadByte();
-				int type    = br.ReadByte();
+				int chunkID = spc.ReadByte();
+				int type    = spc.ReadByte();
 
 				switch (chunkID)
 				{
 					case Xid6_Song:
 					{
-						int lengthOfSongName = br.ReadInt16();
+						int lengthOfSongName = spc.ReadInt16();
 
 						if (lengthOfSongName < 1 || lengthOfSongName > 0x100)
 						{
@@ -556,7 +423,7 @@ namespace GameMusicInfoReader
 						else
 						{
 							char[] songNameChars = new char[lengthOfSongName];
-							br.Read(songNameChars, 0, lengthOfSongName);
+							spc.Read(songNameChars, 0, lengthOfSongName);
 							XidSong = new string(songNameChars);
 						}
 						break;
@@ -564,7 +431,7 @@ namespace GameMusicInfoReader
 
 					case Xid6_Game:
 					{
-						int lengthOfGameName = br.ReadInt16();
+						int lengthOfGameName = spc.ReadInt16();
 
 						if (lengthOfGameName < 1 || lengthOfGameName > 0x100)
 						{
@@ -573,7 +440,7 @@ namespace GameMusicInfoReader
 						else
 						{
 							char[] gameNameChars = new char[lengthOfGameName];
-							br.Read(gameNameChars, 0, lengthOfGameName);
+							spc.Read(gameNameChars, 0, lengthOfGameName);
 
 							XidGame = new string(gameNameChars);
 						}
@@ -582,7 +449,7 @@ namespace GameMusicInfoReader
 
 					case Xid6_Artist:
 					{
-						int lengthOfArtistName = br.ReadInt16();
+						int lengthOfArtistName = spc.ReadInt16();
 
 						if (lengthOfArtistName < 1 || lengthOfArtistName > 0x100)
 						{
@@ -591,7 +458,7 @@ namespace GameMusicInfoReader
 						else
 						{
 							char[] artistNameChars = new char[lengthOfArtistName];
-							br.Read(artistNameChars, 0, lengthOfArtistName);
+							spc.Read(artistNameChars, 0, lengthOfArtistName);
 
 							XidArtist = new string(artistNameChars);
 						}
@@ -600,7 +467,7 @@ namespace GameMusicInfoReader
 
 					case Xid6_Dumper:
 					{
-						int lengthOfDumperName = br.ReadInt16();
+						int lengthOfDumperName = spc.ReadInt16();
 
 						if (lengthOfDumperName < 1 || lengthOfDumperName > 0x11)
 						{
@@ -609,7 +476,7 @@ namespace GameMusicInfoReader
 						else
 						{
 							char[] dumperNameChars = new char[lengthOfDumperName];
-							br.Read(dumperNameChars, 0, lengthOfDumperName);
+							spc.Read(dumperNameChars, 0, lengthOfDumperName);
 
 							XidDumper = new string(dumperNameChars);
 						}
@@ -618,21 +485,21 @@ namespace GameMusicInfoReader
 
 					case Xid6_Date:
 					{
-						int dateLen = br.ReadInt16();
-						XidDumpDate = br.ReadInt32();
+						int dateLen = spc.ReadInt16();
+						XidDumpDate = spc.ReadInt32();
 						break;
 					}
 
 					case Xid6_Emu:
 					{
-						XidEmulator = br.ReadByte();
-						br.ReadByte(); // Skip last byte in sub-chunk header.
+						XidEmulator = spc.ReadByte();
+						spc.ReadByte(); // Skip last byte in sub-chunk header.
 						break;
 					}
 
 					case Xid6_Comment:
 					{
-						int lengthOfComment = br.ReadInt16();
+						int lengthOfComment = spc.ReadInt16();
 
 						if (lengthOfComment < 1 || lengthOfComment > 0x100)
 						{
@@ -641,7 +508,7 @@ namespace GameMusicInfoReader
 						else
 						{
 							char[] commentChars = new char[lengthOfComment];
-							br.Read(commentChars, 0, lengthOfComment);
+							spc.Read(commentChars, 0, lengthOfComment);
 
 							XidComment = new string(commentChars);
 						}
@@ -650,7 +517,7 @@ namespace GameMusicInfoReader
 
 					case Xid6_OST:
 					{
-						int lengthOfOst = br.ReadInt16();
+						int lengthOfOst = spc.ReadInt16();
 
 						if (lengthOfOst < 1 || lengthOfOst > 0x100)
 						{
@@ -659,7 +526,7 @@ namespace GameMusicInfoReader
 						else
 						{
 							char[] ostChars = new char[lengthOfOst];
-							br.Read(ostChars, 0, lengthOfOst);
+							spc.Read(ostChars, 0, lengthOfOst);
 
 							XidOstTitle = new string(ostChars);
 						}
@@ -668,7 +535,7 @@ namespace GameMusicInfoReader
 
 					case Xid6_Disc:
 					{
-						int discNum = br.ReadInt16();
+						int discNum = spc.ReadInt16();
 
 						if (discNum > 9)
 							discNum = 9;
@@ -680,7 +547,7 @@ namespace GameMusicInfoReader
 
 					case Xid6_Track:
 					{
-						int track = br.ReadInt16() >> 8; // Lower byte is an optional character, we don't need to care about this.
+						int track = spc.ReadInt16() >> 8; // Lower byte is an optional character, we don't need to care about this.
 
 						if (track - 1 > 98)
 							track = 0;
@@ -692,7 +559,7 @@ namespace GameMusicInfoReader
 
 					case Xid6_Publisher:
 					{
-						int publisherNameLength = br.ReadInt16();
+						int publisherNameLength = spc.ReadInt16();
 
 						if (publisherNameLength < 1 || publisherNameLength > 0x100)
 						{
@@ -701,7 +568,7 @@ namespace GameMusicInfoReader
 						else
 						{
 							char[] publisherNameChars = new char[publisherNameLength];
-							br.Read(publisherNameChars, 0, publisherNameLength);
+							spc.Read(publisherNameChars, 0, publisherNameLength);
 							XidPublisher = new string(publisherNameChars);
 						}
 						break;
@@ -709,15 +576,15 @@ namespace GameMusicInfoReader
 
 					case Xid6_Copyright:
 					{
-						XidCopyright = br.ReadInt16();
+						XidCopyright = spc.ReadInt16();
 						break;
 					}
 
 					case Xid6_IntroLength:
 					{
-						br.ReadInt16(); // Skip last 2 bytes of the sub-chunk header.
+						spc.ReadInt16(); // Skip last 2 bytes of the sub-chunk header.
 						
-						int introLen = br.ReadInt32();
+						int introLen = spc.ReadInt32();
 
 						if (introLen > XidMaxTicks)
 							introLen = XidMaxTicks;
@@ -728,9 +595,9 @@ namespace GameMusicInfoReader
 
 					case Xid6_LoopLength:
 					{
-						br.ReadInt16(); // Skip last 2 bytes of the sub-chunk header.
+						spc.ReadInt16(); // Skip last 2 bytes of the sub-chunk header.
 
-						int loopLen = br.ReadInt32();
+						int loopLen = spc.ReadInt32();
 
 						if (loopLen > XidMaxTicks)
 							loopLen = XidMaxTicks;
@@ -741,9 +608,9 @@ namespace GameMusicInfoReader
 
 					case Xid6_EndLength:
 					{
-						br.ReadInt16(); // Skip last 2 bytes of the sub-chunk header.
+						spc.ReadInt16(); // Skip last 2 bytes of the sub-chunk header.
 
-						int endLen = br.ReadInt32();
+						int endLen = spc.ReadInt32();
 
 						if (endLen > XidMaxTicks)
 							endLen = XidMaxTicks;
@@ -754,9 +621,9 @@ namespace GameMusicInfoReader
 
 					case Xid6_FadeLength:
 					{
-						br.ReadInt16(); // Skip last 2 bytes of the sub-chunk header.
+						spc.ReadInt16(); // Skip last 2 bytes of the sub-chunk header.
 
-						int fadeLen = br.ReadInt32();
+						int fadeLen = spc.ReadInt32();
 
 						if (fadeLen > XidTicksPerMin - 1)
 							fadeLen = XidTicksPerMin - 1;
@@ -767,14 +634,14 @@ namespace GameMusicInfoReader
 
 					case Xid6_MutedVoices:
 					{
-						XidMutedChannels = br.ReadByte();
-						br.ReadByte(); // Skip last byte in sub-chunk header.
+						XidMutedChannels = spc.ReadByte();
+						spc.ReadByte(); // Skip last byte in sub-chunk header.
 						break;
 					}
 
 					case Xid6_NumberOfTimesToLoop:
 					{
-						int loopTimes = br.ReadByte();
+						int loopTimes = spc.ReadByte();
 
 						if (loopTimes < 1)
 							loopTimes = 1;
@@ -784,13 +651,13 @@ namespace GameMusicInfoReader
 
 						XidNumberOfTimesToLoop = loopTimes;
 
-						br.ReadByte(); // Skip last byte in sub-chunk header.
+						spc.ReadByte(); // Skip last byte in sub-chunk header.
 						break;
 					}
 
 					case Xid6_MixingPreAmpLevel:
 					{
-						int mixLevel = br.ReadByte();
+						int mixLevel = spc.ReadByte();
 
 						if (mixLevel < 32768)
 							mixLevel = 32768;
@@ -800,7 +667,7 @@ namespace GameMusicInfoReader
 
 						XidMixingLevel = mixLevel;
 
-						br.ReadByte(); // Skip last byte in sub-chunk header.
+						spc.ReadByte(); // Skip last byte in sub-chunk header.
 						break;
 					}
 				}
@@ -809,22 +676,6 @@ namespace GameMusicInfoReader
 				xid6ChunkSize -= 4;
 			}
 		}
-
-		#region IDisposable Methods
-
-		public void Dispose()
-		{
-			Dispose(true);
-		}
-
-		private void Dispose(bool disposing)
-		{
-			if (disposing)
-			{
-				spc.Dispose();
-			}
-		}
-
 
 		#endregion
 	}
