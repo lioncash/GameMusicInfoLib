@@ -8,9 +8,6 @@ namespace GameMusicInfoReader.Modules
 	/// </summary>
 	public sealed class S3MReader
 	{
-		// Filestream representing an S3M module.
-		private readonly FileStream s3m;
-
 		/// <summary>
 		/// Constructor
 		/// </summary>

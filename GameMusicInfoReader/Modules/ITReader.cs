@@ -24,7 +24,7 @@ namespace GameMusicInfoReader.Modules
 		public ITReader(string path)
 		{
 			it = File.OpenRead(path);
-			br = new BinaryReader(it, Encoding.Default, true);
+			br = new BinaryReader(it, Encoding.Default);
 		}
 
 		/// <summary>

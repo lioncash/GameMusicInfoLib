@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 
 namespace GameMusicInfoReader
 {
@@ -19,6 +18,29 @@ namespace GameMusicInfoReader
 		public NsfReader(string path)
 		{
 			nsf = File.OpenRead(path);
+			BinaryReader bnsf = new BinaryReader(nsf);
+			{
+				// Header + Version
+				char[] header = new char[5];
+				bnsf.Read(header, 0, header.Length);
+				HeaderID = new string(header);
+				Version = bnsf.ReadByte();
+
+				// Total songs & starting song
+				TotalSongs = bnsf.ReadByte();
+				StartingSong = bnsf.ReadByte();
+
+				// Song name/Author/Copyright
+				char[] info = new char[32];
+				bnsf.Read(info, 0, info.Length);
+				SongName = new string(info);
+
+				bnsf.Read(info, 0, info.Length);
+				Artist = new string(info);
+
+				bnsf.Read(info, 0, 32);
+				Copyright = new string(info);
+			}
 		}
 
 		/// <summary>
@@ -26,20 +48,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string HeaderID
 		{
-			get
-			{
-				byte[] magic = new byte[5];
-
-				// Ensure start of file.
-				nsf.Seek(0, SeekOrigin.Begin);
-
-				// Read 5 bytes
-				nsf.Read(magic, 0, 5);
-
-				// Convert bytes to string
-				return Encoding.UTF8.GetString(magic);
-
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -47,12 +57,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public int Version
 		{
-			get
-			{
-				// Seek 4 bytes in
-				nsf.Seek(4, SeekOrigin.Begin);
-				return nsf.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -60,12 +66,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public int TotalSongs
 		{
-			get
-			{	
-				// Seek 6 bytes in
-				nsf.Seek(6, SeekOrigin.Begin);
-				return nsf.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -73,12 +75,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public int StartingSong
 		{
-			get
-			{
-				// Seek 7 bytes in
-				nsf.Seek(7, SeekOrigin.Begin);
-				return nsf.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -86,19 +84,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string SongName
 		{
-			get
-			{
-				byte[] songName = new byte[32];
-
-				// Seek 14 bytes in
-				nsf.Seek(14, SeekOrigin.Begin);
-
-				// Read 32 bytes
-				nsf.Read(songName, 0, 32);
-
-				// Convert it to a string 
-				return Encoding.UTF8.GetString(songName);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -108,19 +95,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string Artist
 		{
-			get
-			{
-				byte[] artist = new byte[32];
-
-				// Seek 46 bytes in
-				nsf.Seek(0x2E, SeekOrigin.Begin);
-
-				// Read 32 bytes
-				nsf.Read(artist, 0, 32);
-
-				// Convert bytes to string
-				return Encoding.UTF8.GetString(artist);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -128,19 +104,8 @@ namespace GameMusicInfoReader
 		/// </summary>
 		public string Copyright
 		{
-			get
-			{
-				byte[] copyright = new byte[32];
-
-				// Seek 78 bytes in
-				nsf.Seek(0x4E, SeekOrigin.Begin);
-
-				// Read 32 bytes
-				nsf.Read(copyright, 0, 32);
-
-				// Convert it to a string
-				return Encoding.UTF8.GetString(copyright);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -172,36 +137,28 @@ namespace GameMusicInfoReader
 		{
 			get
 			{
-				// Seek 110 bytes in
-				nsf.Seek(0x6E, SeekOrigin.Begin);
-
 				byte[] playbackBytes = new byte[2];
 
-				// Read 2 bytes
-				nsf.Read(playbackBytes, 0, 2);
-
-				int v = playbackBytes[0] | (playbackBytes[1] << 8);
-
-				// If its a PAL NSF file
-				if (!IsNTSC)
+				if (IsNTSC)
 				{
-					// Clear playbackBytes contents
-					Array.Clear(playbackBytes, 0, playbackBytes.Length);
-
-					// Seek 120 (0x78) bytes in
-					nsf.Seek(0x78, SeekOrigin.Begin);
-
-					// Read 2 bytes
+					nsf.Seek(0x6E, SeekOrigin.Begin);
 					nsf.Read(playbackBytes, 0, 2);
 
-					v = playbackBytes[0] | (playbackBytes[1] << 8);
+					int v = playbackBytes[0] | (playbackBytes[1] << 8);
+
+					// Return playback rate in Hertz (for NTSC)
+					return (1000000 / v);
+				}
+				else
+				{
+					nsf.Seek(0x78, SeekOrigin.Begin);
+					nsf.Read(playbackBytes, 0, 2);
+
+					int v = playbackBytes[0] | (playbackBytes[1] << 8);
 
 					// Return playback rate in Hertz (for PAL)
 					return (1000000 / v);
 				}
-
-				// Return playback rate in Hertz (for NTSC)
-				return (1000000 / v);
 			}
 		}
 
