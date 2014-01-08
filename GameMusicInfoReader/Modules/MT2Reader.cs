@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace GameMusicInfoReader.Modules
 {
@@ -20,9 +19,7 @@ namespace GameMusicInfoReader.Modules
 			using(BinaryReader mtt = new BinaryReader(File.OpenRead(path)))
 			{
 				// Header
-				byte[] header = new byte[4];
-				mtt.Read(header, 0, 4);
-				HeaderID = Encoding.UTF8.GetString(header);
+				HeaderID = new string(mtt.ReadChars(4));
 
 				// Skip 4 bytes (safe to ignore)
 				mtt.BaseStream.Position += 4;
@@ -30,15 +27,9 @@ namespace GameMusicInfoReader.Modules
 				// Internal version number.
 				Version = mtt.ReadInt16();
 
-				// Tracker name.
-				byte[] trackerName = new byte[32];
-				mtt.Read(trackerName, 0, 32);
-				TrackerName = Encoding.UTF8.GetString(trackerName);
-
-				// Track title
-				byte[] title = new byte[64];
-				mtt.Read(title, 0, 64);
-				Title = Encoding.UTF8.GetString(title);
+				// Tracker name and module title
+				TrackerName = new string(mtt.ReadChars(32));
+				Title = new string(mtt.ReadChars(64));
 
 				// Totals
 				TotalPositions = mtt.ReadInt16();
