@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Text;
 
 namespace GameMusicInfoReader.Modules
 {
@@ -19,9 +18,7 @@ namespace GameMusicInfoReader.Modules
 			using (BinaryReader br = new BinaryReader(File.OpenRead(path)))
 			{
 				// Header
-				byte[] header = new byte[7];
-				br.Read(header, 0, header.Length);
-				HeaderID = Encoding.UTF8.GetString(header);
+				HeaderID = new string(br.ReadChars(7));
 
 				// Num samples
 				br.BaseStream.Seek(0xA, SeekOrigin.Begin);

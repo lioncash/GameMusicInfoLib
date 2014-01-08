@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Text;
 
 namespace GameMusicInfoReader.Modules
 {
@@ -19,9 +18,7 @@ namespace GameMusicInfoReader.Modules
 			using (BinaryReader ptm = new BinaryReader(File.OpenRead(path)))
 			{
 				// Song name
-				byte[] songName = new byte[28];
-				ptm.Read(songName, 0, songName.Length);
-				SongName = Encoding.UTF8.GetString(songName);
+				SongName = new string(ptm.ReadChars(28));
 
 				// Totals
 				ptm.BaseStream.Seek(0x20, SeekOrigin.Begin);

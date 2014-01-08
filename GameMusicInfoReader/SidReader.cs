@@ -28,9 +28,7 @@ namespace GameMusicInfoReader
 				sid.BaseStream.Seek(0x00, SeekOrigin.Begin);
 
 				// Header
-				byte[] header = new byte[4];
-				sid.Read(header, 0, header.Length);
-				HeaderID = Encoding.UTF8.GetString(header);
+				HeaderID = new string(sid.ReadChars(4));
 
 				// Version number (Shift because big-endian)
 				Version = Endian.SwapInt16(sid.ReadInt16());
@@ -50,20 +48,10 @@ namespace GameMusicInfoReader
 				// Speed integer
 				Speed = Endian.SwapInt32(sid.ReadInt32());
 
-				// Song title
-				char[] songTitle = new char[32];
-				sid.Read(songTitle, 0, songTitle.Length);
-				SongTitle = new string(songTitle);
-
-				// Artist
-				char[] artist = new char[32];
-				sid.Read(artist, 0, artist.Length);
-				Artist = new string(artist);
-
-				// Copyright
-				char[] copyright = new char[32];
-				sid.Read(copyright, 0, copyright.Length);
-				Copyright = new string(copyright);
+				// Song, Artist and Copyright
+				SongTitle = new string(sid.ReadChars(32));
+				Artist = new string(sid.ReadChars(32));
+				Copyright = new string(sid.ReadChars(32));
 			}
 		}
 

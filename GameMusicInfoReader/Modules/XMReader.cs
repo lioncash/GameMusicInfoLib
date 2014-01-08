@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Text;
 
 namespace GameMusicInfoReader.Modules
 {
@@ -17,20 +16,14 @@ namespace GameMusicInfoReader.Modules
 			using (BinaryReader xm = new BinaryReader(File.OpenRead(path)))
 			{
 				// Header
-				byte[] header = new byte[17];
-				xm.Read(header, 0, header.Length);
-				HeaderID = Encoding.UTF8.GetString(header);
+				HeaderID = new string(xm.ReadChars(17));
 
 				// Module name
-				byte[] moduleName = new byte[20];
-				xm.Read(moduleName, 0, moduleName.Length);
-				ModuleName = Encoding.UTF8.GetString(moduleName);
+				ModuleName = new string(xm.ReadChars(20));
 
 				// Module tracker
 				xm.BaseStream.Position += 1; // Skip garbage byte
-				byte[] moduleTracker = new byte[20];
-				xm.Read(moduleTracker, 0, moduleTracker.Length);
-				ModuleTracker = Encoding.UTF8.GetString(moduleTracker);
+				ModuleTracker = new string(xm.ReadChars(20));
 
 				// Song length
 				xm.BaseStream.Seek(0x40, SeekOrigin.Begin);

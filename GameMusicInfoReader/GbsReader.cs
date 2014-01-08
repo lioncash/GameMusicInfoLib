@@ -14,35 +14,23 @@ namespace GameMusicInfoReader
 		/// <param name="path">The path to a GBS file</param>
 		public GbsReader(string path)
 		{
-			BinaryReader gbs = new BinaryReader(File.OpenRead(path));
+			using(BinaryReader gbs = new BinaryReader(File.OpenRead(path)))
+			{
+				HeaderID = new string(gbs.ReadChars(3));
+				Version = gbs.ReadByte();
+				TotalSongs = gbs.ReadByte();
+				StartingSong = gbs.ReadByte();
+				LoadAddress = gbs.ReadInt16();
+				InitAddress = gbs.ReadInt16();
+				PlayAddress = gbs.ReadInt16();
+				StackPointer = gbs.ReadInt16();
+				TimerModulo = gbs.ReadByte();
+				TimerControl = gbs.ReadByte();
 
-			// Header magic
-			byte[] magic = new byte[3];
-			gbs.Read(magic, 0, 3);
-			HeaderID = Encoding.UTF8.GetString(magic);
-
-			Version = gbs.ReadByte();
-			TotalSongs = gbs.ReadByte();
-			StartingSong = gbs.ReadByte();
-			LoadAddress = gbs.ReadInt16();
-			InitAddress = gbs.ReadInt16();
-			PlayAddress = gbs.ReadInt16();
-			StackPointer = gbs.ReadInt16();
-			TimerModulo = gbs.ReadByte();
-			TimerControl = gbs.ReadByte();
-
-			byte[] infoBytes = new byte[32];
-			gbs.Read(infoBytes, 0, 32);
-			SongTitle = Encoding.UTF8.GetString(infoBytes);
-
-			gbs.Read(infoBytes, 0, 32);
-			Artist = Encoding.UTF8.GetString(infoBytes);
-
-			gbs.Read(infoBytes, 0, 32);
-			Copyright = Encoding.UTF8.GetString(infoBytes);
-
-			// Done
-			gbs.Close();
+				SongTitle = new string(gbs.ReadChars(32));
+				Artist = new string(gbs.ReadChars(32));
+				Copyright = new string(gbs.ReadChars(32));
+			}
 		}
 
 		/// <summary>

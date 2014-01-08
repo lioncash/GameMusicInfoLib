@@ -22,9 +22,7 @@ namespace GameMusicInfoReader
 			using (BinaryReader fs = new BinaryReader(File.OpenRead(path)))
 			{
 				// Header ID
-				byte[] headerId = new byte[3];
-				fs.Read(headerId, 0, 3);
-				HeaderID = Encoding.UTF8.GetString(headerId);
+				HeaderID = new string(fs.ReadChars(3));
 
 				// Skip version byte (don't care)
 				fs.BaseStream.Position += 1;

@@ -16,9 +16,7 @@ namespace GameMusicInfoReader
 			using (BinaryReader nsf = new BinaryReader(File.OpenRead(path)))
 			{
 				// Header + Version
-				char[] header = new char[5];
-				nsf.Read(header, 0, header.Length);
-				HeaderID = new string(header);
+				HeaderID = new string(nsf.ReadChars(5));
 				Version = nsf.ReadByte();
 
 				// Total songs & starting song
@@ -26,15 +24,9 @@ namespace GameMusicInfoReader
 				StartingSong = nsf.ReadByte();
 
 				// Song name/Author/Copyright
-				char[] info = new char[32];
-				nsf.Read(info, 0, info.Length);
-				SongName = new string(info);
-
-				nsf.Read(info, 0, info.Length);
-				Artist = new string(info);
-
-				nsf.Read(info, 0, 32);
-				Copyright = new string(info);
+				SongName  = new string(nsf.ReadChars(32));
+				Artist    = new string(nsf.ReadChars(32));
+				Copyright = new string(nsf.ReadChars(32));
 
 				// Check for NTSC.
 				nsf.BaseStream.Position = 0x7A;
