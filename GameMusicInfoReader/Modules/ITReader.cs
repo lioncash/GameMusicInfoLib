@@ -1,50 +1,87 @@
-﻿using System;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 
 namespace GameMusicInfoReader.Modules
 {
 	// TODO: Possibly more sample reading.
-	// TODO: Possible cleanup. (ie, breaking sample methods and pattern methods into their own class).
-
 
 	/// <summary>
 	/// A reader for Impulse Tracker modules
 	/// </summary>
-	public sealed class ITReader : IDisposable
+	public sealed class ITReader
 	{
-		// Filestream representing an IT module
-		private readonly FileStream it;
-		private readonly BinaryReader br;
-
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="path">Path to an IT module</param>
 		public ITReader(string path)
 		{
-			it = File.OpenRead(path);
-			br = new BinaryReader(it, Encoding.Default);
+			using(BinaryReader br = new BinaryReader(File.OpenRead(path)))
+			{
+				HeaderID = new string(br.ReadChars(4));
+				SongName = new string(br.ReadChars(26));
+				PatternHighlightInfo = br.ReadInt16();
+
+				// Totals
+				TotalOrders      = br.ReadInt16();
+				TotalInstruments = br.ReadInt16();
+				TotalSamples     = br.ReadInt16();
+				TotalPatterns    = br.ReadInt16();
+
+				// Tracker related
+				CreatedWithTracker    = br.ReadInt16();
+				CompatibleWithTracker = br.ReadInt16();
+
+				// Flags
+				short flag = br.ReadInt16();
+				IsStereo                = ((flag &  1) != 0);
+				HasVol0MixOptimizations = ((flag &  2) != 0);
+				UsesInstruments         = ((flag &  4) != 0);
+				SlideType               = ((flag &  8) != 0) ? 1 : 0;
+				UsesOldEffects          = ((flag & 16) != 0);
+				LinkEffectMemory        = ((flag & 32) != 0);
+				UsesMidiPitchController = ((flag & 64) != 0);
+
+				// Special flags
+				short special = br.ReadInt16();
+				HasSongMessage = ((special & 1) != 0);
+
+				// Volume and Tempo related stuff
+				GlobalVolume      = br.ReadByte();
+				MixVolume         = br.ReadByte();
+				InitialSpeed      = br.ReadByte();
+				InitialTempo      = br.ReadByte();
+				PanningSeparation = br.ReadByte();
+				PitchWheelDepth   = br.ReadByte();
+
+				// Song message
+				short messageLen = br.ReadInt16();
+				int messageOffset = br.ReadInt32();
+				br.BaseStream.Position = messageOffset;
+				if (HasSongMessage)
+					SongMessage = new string(br.ReadChars(messageLen)).Replace((char) 0xD, '\n');
+				else
+					SongMessage = "N/A";
+
+				// Channel related
+				TotalUsedChannels = GetTotalUsedChannels(br);
+				ChannelPanning    = GetChannelPanning(br);
+				ChannelVolumes    = GetChannelVolumes(br);
+
+				// Parsing
+				ParseInstruments(br);
+				ParseSamples(br);
+			}
 		}
+
+		#region Generic Info
 
 		/// <summary>
 		/// The header magic of the IT module
 		/// </summary>
 		public string HeaderID
 		{
-			get
-			{
-				byte[] magic = new byte[4];
-
-				// Ensure we start at the beginning of the file
-				it.Seek(0, SeekOrigin.Begin);
-
-				// Read 4 bytes
-				it.Read(magic, 0, 4);
-
-				// Convert bytes to string
-				return Encoding.UTF8.GetString(magic);
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -52,19 +89,18 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string SongName
 		{
-			get
-			{
-				byte[] songName = new byte[26];
+			get;
+			private set;
+		}
 
-				// Seek 4 bytes in
-				it.Seek(4, SeekOrigin.Begin);
-
-				// Read 26 bytes
-				it.Read(songName, 0, 26);
-
-				// Convert bytes to string
-				return Encoding.UTF8.GetString(songName);
-			}
+		/// <summary>
+		/// Pattern row hilight information.
+		/// Only relevant for pattern editing situations.
+		/// </summary>
+		public short PatternHighlightInfo
+		{
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -72,12 +108,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalOrders
 		{
-			get
-			{
-				// Seek 32 bytes in
-				br.BaseStream.Seek(0x20, SeekOrigin.Begin);
-				return br.ReadInt16();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -85,12 +117,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalInstruments
 		{
-			get
-			{
-				// Seek 34 bytes in
-				br.BaseStream.Seek(0x22, SeekOrigin.Begin);
-				return br.ReadInt16();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -98,12 +126,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalSamples
 		{
-			get
-			{
-				// Seek 36 bytes in
-				br.BaseStream.Seek(0x24, SeekOrigin.Begin);
-				return br.ReadInt16();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -111,12 +135,17 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int TotalPatterns
 		{
-			get
-			{
-				// Seek 38 bytes in
-				br.BaseStream.Seek(0x26, SeekOrigin.Begin);
-				return br.ReadInt16();
-			}
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Version of ImpulseTracker that created the module.
+		/// </summary>
+		public short CreatedWithTracker
+		{
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -124,12 +153,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int CompatibleWithTracker
 		{
-			get
-			{
-				// Seek 42 bytes in
-				it.Seek(0x2A, SeekOrigin.Begin);
-				return it.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -137,20 +162,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public bool IsStereo
 		{
-			get
-			{
-				// Seek 44 bytes in
-				it.Seek(0x2C, SeekOrigin.Begin);
-
-				byte value = (byte)it.ReadByte();
-
-				// If bit 0 is set, it's stereo
-				if ((value & 1) != 0)
-					return true;
-
-				// Not set, mono.
-				return false;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -162,20 +175,8 @@ namespace GameMusicInfoReader.Modules
 		/// </remarks>
 		public bool HasVol0MixOptimizations
 		{
-			get
-			{
-				// Seek 44 bytes in
-				it.Seek(0x2C, SeekOrigin.Begin);
-
-				byte value = (byte)it.ReadByte();
-
-				// If bit 1 is set
-				if ((value & 2) != 0)
-					return true;
-
-				// Not set.
-				return false;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -184,42 +185,18 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public bool UsesInstruments
 		{
-			get
-			{
-				// Seek 44 bytes in
-				it.Seek(0x2C, SeekOrigin.Begin);
-
-				byte value = (byte)it.ReadByte();
-
-				// If bit 2 is set, uses instruments
-				if ((value & 4) != 0)
-					return true;
-
-				// Not set, uses samples.
-				return false;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
-		/// <para>Returns 1 if the module uses linear slides. </para>
-		/// <para>Returns 0 if the modules uses Amiga slides. </para>
+		/// <para>1 if the module uses linear slides. </para>
+		/// <para>0 if the modules uses Amiga slides. </para>
 		/// </summary>
 		public int SlideType
 		{
-			get
-			{
-				// Seek 44 bytes in
-				it.Seek(0x2C, SeekOrigin.Begin);
-
-				byte value = (byte)it.ReadByte();
-
-				// If bit 3 is set, uses linear slides
-				if ((value & 8) != 0)
-					return 1;
-
-				// Not set, Amiga slides.
-				return 0;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -228,20 +205,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public bool UsesOldEffects
 		{
-			get
-			{
-				// Seek 44 bytes in
-				it.Seek(0x2C, SeekOrigin.Begin);
-
-				byte value = (byte)it.ReadByte();
-
-				// If bit 4 is set, uses old effects
-				if ((value & 16) != 0)
-					return true;
-
-				// Not set, uses IT effects
-				return false;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -249,20 +214,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public bool LinkEffectMemory
 		{
-			get
-			{
-				// Seek 44 bytes in
-				it.Seek(0x2C, SeekOrigin.Begin);
-
-				byte value = (byte)it.ReadByte();
-
-				// If bit 5 is set, links memory
-				if ((value & 32) != 0)
-					return true;
-
-				// Not set, doesn't link memory
-				return false;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -270,20 +223,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public bool UsesMidiPitchController
 		{
-			get
-			{
-				// Seek 44 bytes in
-				it.Seek(0x2C, SeekOrigin.Begin);
-
-				byte value = (byte)it.ReadByte();
-
-				// If bit 6 is set, uses pitch controller.
-				if ((value & 64) != 0)
-					return true;
-
-				// Not set, doesn't use pitch controller.
-				return false;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -291,20 +232,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public bool HasSongMessage
 		{
-			get
-			{
-				// Seek 46 bytes in
-				it.Seek(0x2E, SeekOrigin.Begin);
-
-				byte value = (byte)it.ReadByte();
-
-				// If bit 0 is set, has a song message
-				if ((value & 1) != 0)
-					return true;
-
-				// Not set, doesn't have a song message
-				return false;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -312,12 +241,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int GlobalVolume
 		{
-			get
-			{
-				// Seek 48 bytes in
-				it.Seek(0x30, SeekOrigin.Begin);
-				return it.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -326,12 +251,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int MixVolume
 		{
-			get
-			{
-				// Seek 49 bytes in
-				it.Seek(0x31, SeekOrigin.Begin);
-				return it.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -339,12 +260,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int InitialSpeed
 		{
-			get
-			{
-				// Seek 50 bytes in
-				it.Seek(0x32, SeekOrigin.Begin);
-				return it.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -352,12 +269,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int InitialTempo 
 		{
-			get
-			{
-				// Seek 51 bytes in
-				it.Seek(0x33, SeekOrigin.Begin);
-				return it.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -365,12 +278,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int PanningSeparation
 		{
-			get
-			{
-				// Seek 52 bytes in
-				it.Seek(0x34, SeekOrigin.Begin);
-				return it.ReadByte();
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -378,18 +287,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public int PitchWheelDepth
 		{
-			get
-			{
-				if (UsesMidiPitchController)
-				{
-					// Seek 53 bytes in
-					it.Seek(0x35, SeekOrigin.Begin);
-					return it.ReadByte();
-				}
-
-				// No MIDI pitch controller being used
-				return 0;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -397,62 +296,8 @@ namespace GameMusicInfoReader.Modules
 		/// </summary>
 		public string SongMessage
 		{
-			get
-			{
-				if (HasSongMessage)
-				{
-					int length = SongMessageLength;
-					int offset = SongMessageOffset;
-
-					// Seek to the song message
-					br.BaseStream.Seek(offset, SeekOrigin.Begin);
-					// Read the message length
-					byte[] messageBytes = br.ReadBytes(length);
-
-					// Convert bytes to a string
-					string msg = Encoding.UTF8.GetString(messageBytes);
-
-					// Correctly replace 0xD with the newline.
-					return msg.Replace((char)0xD, '\n');
-				}
-
-				// No song message
-				return "<No Message>";
-			}
-		}
-
-		// Offset to the song message in the IT module
-		private int SongMessageOffset
-		{
-			get
-			{
-				if (HasSongMessage)
-				{
-					// Seek 56 bytes in
-					br.BaseStream.Seek(0x38, SeekOrigin.Begin);
-					return br.ReadInt32();
-				}
-
-				// No song message
-				return 0;
-			}
-		}
-
-		// The length of the message embedded in the IT module
-		private int SongMessageLength
-		{
-			get
-			{
-				if (HasSongMessage)
-				{
-					// Seek 54 bytes in
-					br.BaseStream.Seek(0x36, SeekOrigin.Begin);
-					return br.ReadInt16();
-				}
-
-				// No song message
-				return 0;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -460,30 +305,10 @@ namespace GameMusicInfoReader.Modules
 		/// <para></para>
 		/// Has a max of 64 channels
 		/// </summary>
-		public int TotalChannels
+		public int TotalUsedChannels
 		{
-			get
-			{
-				int count = 0;
-				br.BaseStream.Seek(0x40, SeekOrigin.Begin);
-
-				// -1 signifies channels that haven't been set.
-				while (br.ReadSByte() != -1)
-				{
-					// 0x7F = end of all channels
-					// So, kill the loop if we hit it
-					if (br.BaseStream.Position == 0x7F)
-					{
-						count++;
-						break;
-					}
-
-					// Continue counting channels
-					count++;
-				}
-
-				return count;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -503,22 +328,8 @@ namespace GameMusicInfoReader.Modules
 		/// </remarks>
 		public int[] ChannelPanning
 		{
-			get
-			{
-				int totalChannels = TotalChannels;
-				int[] channels = new int[totalChannels];
-
-				// Seek to the channel panning data
-				it.Seek(0x40, SeekOrigin.Begin);
-
-				// Read data into each channel
-				for (int i = 0; i < totalChannels; i++)
-				{
-					channels[i] = it.ReadByte();
-				}
-
-				return channels;
-			}
+			get;
+			private set;
 		}
 
 		/// <summary>
@@ -532,625 +343,608 @@ namespace GameMusicInfoReader.Modules
 		/// </remarks>
 		public int[] ChannelVolumes
 		{
-			get
+			get;
+			private set;
+		}
+
+		private int GetTotalUsedChannels(BinaryReader br)
+		{
+			int count = 0;
+			br.BaseStream.Seek(0x40, SeekOrigin.Begin);
+
+			// -1 signifies channels that haven't been set.
+			while (br.ReadSByte() != -1)
 			{
-				int totalChannels = TotalChannels;
-				int[] channelVolumes = new int[totalChannels];
-
-				// Seek to channel volume data
-				it.Seek(0x80, SeekOrigin.Begin);
-
-				// Get all the channel volumes
-				for (int i = 0; i < totalChannels; i++)
+				// 0x7F = end of all channels
+				// So, kill the loop if we hit it
+				if (br.BaseStream.Position == 0x7F)
 				{
-					channelVolumes[i] = it.ReadByte();
+					count++;
+					break;
 				}
 
-				return channelVolumes;
+				// Continue counting channels
+				count++;
 			}
+
+			return count;
 		}
 
-		//////////////////////////////
-		//--- INSTRUMENT READING ---//
-		//////////////////////////////
-
-		// NOTE: The magic number 557 is the length of an individual instrument header
-
-		// The offset to the instrument data
-		private int InstrumentHeaderOffset
+		private int[] GetChannelPanning(BinaryReader br)
 		{
-			get
+			int[] channels = new int[TotalUsedChannels];
+
+			// Seek to the channel panning data
+			br.BaseStream.Seek(0x40, SeekOrigin.Begin);
+
+			// Read data into each channel
+			for (int i = 0; i < TotalUsedChannels; i++)
 			{
-				// Location of the offset within the IT module
-				int offsetLocation = 0xC0 + TotalOrders;
-				
-				// Seek to the location
-				br.BaseStream.Seek(offsetLocation, SeekOrigin.Begin);
-
-				// Read the offset to the instrument data
-				return br.ReadInt32();
+				channels[i] = br.ReadByte();
 			}
+
+			return channels;
 		}
 
-		/// <summary>
-		/// The specified instrument's new note action
-		/// </summary>
-		/// <param name="instrument">The instrument to get the new note action of</param>
-		/// <returns>
-		/// <para>-1 = When entering a value larger than TotalInstruments, or less than 0.</para>
-		/// <para>0 = Cut note </para>
-		/// <para>1 = Continue </para>
-		/// <para>2 = Note off </para>
-		/// <para>3 = Note fade.</para>
-		/// </returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) channel 1 = NewNoteAction(0)
-		/// </remarks>
-		public int NewNoteAction(int instrument)
+		private int[] GetChannelVolumes(BinaryReader br)
 		{
-			// Trying to get an instrument that doesn't exist
-			if (instrument < 0 || instrument > TotalInstruments)
-				return -1;
+			int[] channelVolumes = new int[TotalUsedChannels];
 
-			int instrumentData = InstrumentHeaderOffset;
-			int instrumentNum = instrumentData + (557*instrument); // The instrument number we're visiting
-			
-			// Seek to the new note action byte of the instrument
-			it.Seek(instrumentNum + 0x11, SeekOrigin.Begin);
+			// Seek to channel volume data
+			br.BaseStream.Seek(0x80, SeekOrigin.Begin);
 
-			return it.ReadByte();
-		}
-
-		/// <summary>
-		/// The Duplicate Check Type of an instrument
-		/// </summary>
-		/// <param name="instrument">The instrument to get the duplicate check type information from.</param>
-		/// <returns>
-		/// <para>-1 = Trying to pass a non-existent instrument </para>
-		/// <para>0 = Off</para>
-		/// <para>1 = Note</para>
-		/// <para>2 = Sample</para>
-		/// <para>3 = Instrument</para>
-		/// </returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) channel 1 = DuplicateCheckType(0)
-		/// </remarks>
-		public int DuplicateCheckType(int instrument)
-		{
-			// Trying to get an instrument that doesn't exist
-			if (instrument < 0 || instrument > TotalInstruments)
-				return -1;
-
-			int instrumentData = InstrumentHeaderOffset;
-			int instrumentNum = instrumentData + (557*instrument);
-
-			// Seek to the duplicate check type byte of the instrument
-			it.Seek(instrumentNum + 0x12, SeekOrigin.Begin);
-
-			return it.ReadByte();
-		}
-
-		/// <summary>
-		/// The Duplicate Check Action (DCA) of the specified instrument
-		/// </summary>
-		/// <param name="instrument">The instrument to get the DCA value from</param>
-		/// <returns>
-		/// <para>-1 = Trying to pass a non-existent instrument </para>
-		/// <para>0 = Cut </para>
-		/// <para>1 = Note Off </para>
-		/// <para>2 = Note Fade </para>
-		/// </returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) channel 1 = DuplicateCheckAction(0)
-		/// </remarks>
-		public int DuplicateCheckAction(int instrument)
-		{
-			// Trying to get an instrument that doesn't exist
-			if (instrument < 0 || instrument > TotalInstruments)
-				return -1;
-
-			int instrumentData = InstrumentHeaderOffset;
-			int instrumentNum = instrumentData + (557 * instrument);
-
-			// Seek to the duplicate check action byte of the instrument
-			it.Seek(instrumentNum + 0x13, SeekOrigin.Begin);
-
-			return it.ReadByte();
-		}
-
-		/// <summary>
-		/// Fadeout of an instrument.
-		/// Ranges between (0 - 128)
-		/// </summary>
-		/// <param name="instrument">The instrument to get the fadeout length of</param>
-		/// <returns>The fadeout length (0 - 128)</returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) channel 1 = FadeOut(0)
-		/// </remarks>
-		public int FadeOut(int instrument)
-		{
-			// Trying to get an instrument that doesn't exist
-			if (instrument < 0 || instrument > TotalInstruments)
-				return -1;
-
-			int instrumentData = InstrumentHeaderOffset;
-			int instrumentNum = instrumentData + (557 * instrument);
-
-			// Seek to the fadeout byte of the instrument
-			it.Seek(instrumentNum + 0x14, SeekOrigin.Begin);
-
-			return it.ReadByte();
-		}
-
-		/// <summary>
-		/// The Pitch-Pan separation of a specified instrument
-		/// </summary>
-		/// <param name="instrument">The instrument to get the PPS of</param>
-		/// 
-		/// <returns>
-		/// <para>The PPS of the instrument (-32 - 32)</para>
-		/// <para>Returns -33 when trying to pass a non-existent instrument</para>
-		/// </returns>
-		/// 
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) channel 1 = PitchPanSeparation(0)
-		/// </remarks>
-		public int PitchPanSeparation(int instrument)
-		{
-			// Trying to get an instrument that doesn't exist
-			if (instrument < 0 || instrument > TotalInstruments)
-				return -33;
-
-			int instrumentData = InstrumentHeaderOffset;
-			int instrumentNum = instrumentData + (557 * instrument);
-
-			// Seek to the PPS byte of the instrument
-			br.BaseStream.Seek(instrumentNum + 0x16, SeekOrigin.Begin);
-
-			return br.ReadSByte();
-		}
-
-		/// <summary>
-		/// Default panning for the instrument
-		/// </summary>
-		/// <param name="instrument">The instrument to get the default panning value from</param>
-		/// <returns>
-		/// <para>-1 = Trying to pass a non-existent instrument </para>
-		/// <para>Returns the default panning value (0 - 64)</para>
-		/// </returns>
-		public int DefaultPan(int instrument)
-		{
-			// Trying to get an instrument that doesn't exist
-			if (instrument < 0 || instrument > TotalInstruments)
-				return -1;
-
-			int instrumentData = InstrumentHeaderOffset;
-			int instrumentNum = instrumentData + (557 * instrument);
-
-			// Seek to the DefaultPan byte of the instrument
-			it.Seek(instrumentNum + 0x19, SeekOrigin.Begin);
-
-			return it.ReadByte();
-		}
-
-		/// <summary>
-		/// The random volume variation of the instrument
-		/// </summary>
-		/// <param name="instrument">The instrument to get the RVV of.</param>
-		/// <returns>
-		/// <para>-1 = Trying to pass a non-existent instrument</para>
-		/// <para>Returns the random volume variation as a percentage between (0 - 100)</para>
-		/// </returns>
-		public int RandomVolumeVariation(int instrument)
-		{
-			// Trying to get an instrument that doesn't exist
-			if (instrument < 0 || instrument > TotalInstruments)
-				return -1;
-
-			int instrumentData = InstrumentHeaderOffset;
-			int instrumentNum = instrumentData + (557 * instrument);
-
-			// Seek to the random volume variation byte
-			it.Seek(instrumentNum + 0x1A, SeekOrigin.Begin);
-
-			return it.ReadByte();
-		}
-
-		/// <summary>
-		/// The number of samples associated with the specified instrument
-		/// </summary>
-		/// <param name="instrument">The instrument to get the number of associated samples from</param>
-		/// <returns>
-		/// <para>-1 = Trying to pass a non-existent instrument</para>
-		/// <para>The number of samples associated with the specified instrument</para>
-		/// </returns>
-		public int AssociatedSamples(int instrument)
-		{
-			// Trying to get an instrument that doesn't exist
-			if (instrument < 0 || instrument > TotalInstruments)
-				return -1;
-
-			int instrumentData = InstrumentHeaderOffset;
-			int instrumentNum = instrumentData + (557 * instrument);
-
-			// Seek to the number of samples byte
-			it.Seek(instrumentNum + 0x1E, SeekOrigin.Begin);
-
-			return it.ReadByte();
-		}
-
-		/// <summary>
-		/// The name of the instrument
-		/// </summary>
-		/// <param name="instrument">The instrument to get the name of</param>
-		/// <returns>
-		/// <para>The name of the instrument. </para>
-		/// <para>Null, if an invalid instrument is passed</para>
-		/// </returns>
-		public string InstrumentName(int instrument)
-		{
-			// Trying to get an instrument that doesn't exist
-			if (instrument < 0 || instrument > TotalInstruments)
-				return null;
-
-			byte[] instrumentName = new byte[26];
-			int instrumentData = InstrumentHeaderOffset;
-			int instrumentNum = instrumentData + (557 * instrument);
-
-			// Seek to the instrument name
-			it.Seek(instrumentNum + 0x20, SeekOrigin.Begin);
-			it.Read(instrumentName, 0, 26);
-
-			// Convert bytes to string
-			return Encoding.UTF8.GetString(instrumentName);
-		}
-
-		///////////////////////////
-		// Sample Header Reading //
-		///////////////////////////
-		
-		// Length of the header of each sample.
-		private const int SampleHeaderLength = 80;
-
-		// Offset to the sample headers
-		private int SampleHeaderOffset
-		{
-			get
+			// Get all the channel volumes
+			for (int i = 0; i < TotalUsedChannels; i++)
 			{
-				// Location of the offset within the IT module
-				int initialLocation = 0xC0 + TotalOrders + (TotalInstruments * 4);
-				// Seek to the location of the offset
-				br.BaseStream.Seek(initialLocation, SeekOrigin.Begin);
-				// Get the offset
-				return br.ReadInt16();
+				channelVolumes[i] = br.ReadByte();
 			}
+
+			return channelVolumes;
 		}
+
+		#endregion
+
+		#region Instruments
 
 		/// <summary>
-		/// The global volume of the sample. (Ranges from 0-64)
+		/// Instruments within this module.
 		/// </summary>
-		/// <param name="sample">The sample to get the global volume of.</param>
-		/// <returns>The global volume of the specified sample.</returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) Sample 1 = SampleGlobalVolume(0)
-		/// </remarks>
-		public int SampleGlobalVolume(int sample)
+		public Instrument[] Instruments
 		{
-			int sampleOffset = SampleHeaderOffset;
-			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
-
-			// Seek to global volume byte of the sample.
-			it.Seek(sampleNum + 0x11, SeekOrigin.Begin);
-			return it.ReadByte();
+			get;
+			private set;
 		}
 
-		/// <summary>
-		/// Checks if the given sample is 16-bit 
-		/// </summary>
-		/// <param name="sample">The sample to check</param>
-		/// <returns>
-		/// <para>True if the sample is 16-bit. </para>
-		/// <para>False if the sample is 8-bit. </para>
-		/// </returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) Sample 1 = Is16Bit(0)
-		/// </remarks>
-		public bool Is16Bit(int sample)
+		private void ParseInstruments(BinaryReader br)
 		{
-			int sampleOffset = SampleHeaderOffset;
-			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
+			// Initialize instruments array.
+			Instruments = new Instrument[TotalInstruments];
 
-			// Seek to flags byte of the sample.
-			it.Seek(sampleNum + 0x12, SeekOrigin.Begin);
-			
-			// If bit 1 is set, the sample is 16-bit 
-			return (it.ReadByte() & 2) != 0;
-		}
+			// Get offset to the beginning of the instrument data.
+			int offsetLocation = 0xC0 + TotalOrders;
+			br.BaseStream.Position = offsetLocation;
+			int instrumentDataOffset = br.ReadInt32();
+			br.BaseStream.Position = instrumentDataOffset; // Set position to the first instrument.
 
-		/// <summary>
-		/// Checks if the given sample is compressed
-		/// </summary>
-		/// <param name="sample">The sample to check.</param>
-		/// <returns>
-		/// <para>True, if the sample is compressed. </para>
-		/// <para>False, if the sample is not. </para>
-		/// </returns>
-		public bool IsACompressedSample(int sample)
-		{
-			int sampleOffset = SampleHeaderOffset;
-			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
-
-			// Seek to flags byte of the sample.
-			it.Seek(sampleNum + 0x12, SeekOrigin.Begin);
-
-			// If bit 3 is set, the sample is compressed 
-			return (it.ReadByte() & 8) != 0;
-		}
-
-		/// <summary>
-		/// Checks if the given sample is looped
-		/// </summary>
-		/// <param name="sample">The sample to check.</param>
-		/// <returns>
-		/// <para>True, if the sample is looped. </para>
-		/// <para>False, if the sample is not. </para>
-		/// </returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) Sample 1 = IsLooped(0)
-		/// </remarks>
-		public bool IsLooped(int sample)
-		{
-			int sampleOffset = SampleHeaderOffset;
-			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
-
-			// Seek to flags byte of the sample.
-			it.Seek(sampleNum + 0x12, SeekOrigin.Begin);
-
-			// If bit 4 is set, the sample is looped
-			return (it.ReadByte() & 16) != 0;
-		}
-
-		/// <summary>
-		/// Checks if the given sample has a sustain loop
-		/// </summary>
-		/// <param name="sample">The sample to check.</param>
-		/// <returns>
-		/// <para>True, if the sample uses a sustain loop. </para>
-		/// <para>False, if the sample does not. </para>
-		/// </returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) Sample 1 = SustainIsLooped(0)
-		/// </remarks>
-		public bool SustainIsLooped(int sample)
-		{
-			int sampleOffset = SampleHeaderOffset;
-			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
-
-			// Seek to flags byte of the sample.
-			it.Seek(sampleNum + 0x12, SeekOrigin.Begin);
-
-			// If bit 5 is set, the sample has a sustain loop
-			return (it.ReadByte() & 32) != 0;
-		}
-
-		/// <summary>
-		/// Checks if the sample uses a ping-pong loop
-		/// </summary>
-		/// <param name="sample">The sample to check</param>
-		/// <returns>
-		/// <para>True = Uses a ping-pong loop </para>
-		/// <para>False = Uses a forward loop </para>
-		/// </returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) Sample 1 = UsesPingPongLoop(0)
-		/// </remarks>
-		public bool UsesPingPongLoop(int sample)
-		{
-			int sampleOffset = SampleHeaderOffset;
-			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
-
-			// Seek to flags byte of the sample.
-			it.Seek(sampleNum + 0x12, SeekOrigin.Begin);
-
-			// If bit 6 is set, the sample has a ping-pong loop
-			return (it.ReadByte() & 64) != 0;
-		}
-
-		/// <summary>
-		/// Checks if the sample uses a ping-pong sustain loop
-		/// </summary>
-		/// <param name="sample">The sample to check</param>
-		/// <returns>
-		/// <para>True = Uses a ping-pong sustain loop </para>
-		/// <para>False = Uses a forward sustain loop</para>
-		/// </returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) Sample 1 = UsesPingPongSustainLoop(0)
-		/// </remarks>
-		public bool UsesPingPongSustainLoop(int sample)
-		{
-			int sampleOffset = SampleHeaderOffset;
-			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
-
-			// Seek to flags byte of the sample.
-			it.Seek(sampleNum + 0x12, SeekOrigin.Begin);
-
-			// If bit 7 is set, the sample has a ping-pong sustain loop
-			return (it.ReadByte() & 128) != 0;
-		}
-
-		/// <summary>
-		/// The default volume of the given sample
-		/// </summary>
-		/// <param name="sample">The sample to get the default volume of.</param>
-		/// <returns>The default volume of the sample.</returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) Sample 1 = DefaultVolume(0)
-		/// </remarks>
-		public int DefaultVolume(int sample)
-		{
-			int sampleOffset = SampleHeaderOffset;
-			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
-
-			// Seek to default vol byte of the sample.
-			it.Seek(sampleNum + 0x13, SeekOrigin.Begin);
-			return it.ReadByte();
-		}
-
-		/// <summary>
-		/// The length of the sample in number of samples to process
-		/// </summary>
-		/// <param name="sample">The sample to get the length of.</param>
-		/// <returns>The length of a sample in no. of samples.</returns>
-		/// /// <remarks>
-		/// This method is ZERO-BASED. ie) Sample 1 = LengthInSamples(0)
-		/// </remarks>
-		public int LengthInSamples(int sample)
-		{
-			int sampleOffset = SampleHeaderOffset;
-			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
-
-			// Seek to default vol byte of the sample.
-			br.BaseStream.Seek(sampleNum + 0x30, SeekOrigin.Begin);
-			return br.ReadInt32();
-		}
-
-		/// <summary>
-		/// The name of the given sample (if it has one).
-		/// </summary>
-		/// <param name="sample">The sample to get the name of.</param>
-		/// <returns>The name of the sample</returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) Sample 1 = SampleName(0)
-		/// </remarks>
-		public string SampleName(int sample)
-		{
-			int sampleOffset = SampleHeaderOffset;
-			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
-			byte[] sampleName = new byte[26];
-
-			// Seek to name of the sample.
-			it.Seek(sampleNum + 0x14, SeekOrigin.Begin);
-			// Read sample name
-			it.Read(sampleName, 0, 26);
-
-			// Convert bytes to string
-			return Encoding.UTF8.GetString(sampleName);
-		}
-
-		/// <summary>
-		/// Checks if the samples of a sample are signed.
-		/// </summary>
-		/// <param name="sample">The sample to check the samples of.</param>
-		/// <returns>
-		/// <para>True = Samples are signed. </para>
-		/// <para>False = Samples are unsigned </para>
-		/// </returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) Sample 1 = SamplesAreSigned(0)
-		/// </remarks>
-		public bool SamplesAreSigned(int sample)
-		{
-			int sampleOffset = SampleHeaderOffset;
-			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
-
-			// Seek to vibrato speed of the sample.
-			it.Seek(sampleNum + 0x2E, SeekOrigin.Begin);
-			return (it.ReadByte() & 1) != 0;
-		}
-
-		/// <summary>
-		/// The vibrato speed of the sample (ranges from 0-64)
-		/// </summary>
-		/// <param name="sample">The sample to get the vibrato speed of.</param>
-		/// <returns>The vibrato speed of the sample</returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) Sample 1 = VibratoSpeed(0)
-		/// </remarks>
-		public int VibratoSpeed(int sample)
-		{
-			int sampleOffset = SampleHeaderOffset;
-			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
-
-			// Seek to vibrato speed of the sample.
-			it.Seek(sampleNum + 0x4C, SeekOrigin.Begin);
-			return it.ReadByte();
-		}
-
-		/// <summary>
-		/// The vibrato depth of the sample (ranges from 0-64)
-		/// </summary>
-		/// <param name="sample">The sample to get the vibrato depth of.</param>
-		/// <returns>The vibrato depth of the sample</returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) Sample 1 = VibratoDepth(0)
-		/// </remarks>
-		public int VibratoDepth(int sample)
-		{
-			int sampleOffset = SampleHeaderOffset;
-			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
-
-			// Seek to the vibrato depth of the sample.
-			it.Seek(sampleNum + 0x4D, SeekOrigin.Begin);
-			return it.ReadByte();
-		}
-
-		/// <summary>
-		/// The vibrato waveform type of the sample.
-		/// </summary>
-		/// <param name="sample">The sample to get the vibrato waveform type from.</param>
-		/// <returns>
-		/// <para>The vibrato waveform of the sample. </para>
-		/// <para>0 = Sine wave </para>
-		/// <para>1 = Ramp down </para>
-		/// <para>2 = Square wave </para>
-		/// <para>3 = Random (speed is irrelevant) </para>
-		/// </returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) Sample 1 = VibratoWaveformType(0)
-		/// </remarks>
-		public int VibratoWaveformType(int sample)
-		{
-			int sampleOffset = SampleHeaderOffset;
-			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
-
-			// Seek to name of the sample.
-			it.Seek(sampleNum + 0x4E, SeekOrigin.Begin);
-			return it.ReadByte();
-		}
-
-		/// <summary>
-		/// The vibrato rate of the sample.
-		/// </summary>
-		/// <param name="sample">The sample to get the vibrato rate from.</param>
-		/// <returns> The vibrato rate of the sample. </returns>
-		/// <remarks>
-		/// This method is ZERO-BASED. ie) Sample 1 = VibratoRate(0)
-		/// </remarks>
-		public int VibratoRate(int sample)
-		{
-			int sampleOffset = SampleHeaderOffset;
-			int sampleNum = sampleOffset + (SampleHeaderLength * sample);
-
-			// Seek to vibrato rate of the sample.
-			it.Seek(sampleNum + 0x4E, SeekOrigin.Begin);
-			return it.ReadByte();
-		}
-
-		#region IDisposable Methods
-
-		public void Dispose()
-		{
-			Dispose(true);
-		}
-
-		private void Dispose(bool disposing)
-		{
-			if (disposing)
+			// Go over the instruments
+			for (int i = 0; i < TotalInstruments-1; i++)
 			{
-				br.Dispose();
+				Instruments[i].InstrumentID           = new string(br.ReadChars(4));
+				Instruments[i].DOSFilename            = new string(br.ReadChars(13));
+				Instruments[i].NewNoteAction          = br.ReadByte();
+				Instruments[i].DuplicateCheckType     = br.ReadByte();
+				Instruments[i].DuplicateCheckAction   = br.ReadByte();
+				Instruments[i].FadeOut                = br.ReadInt16();
+				Instruments[i].PitchPanSeparation     = br.ReadSByte();
+				Instruments[i].PitchPanCenter         = br.ReadByte();
+				Instruments[i].GlobalVolume           = br.ReadByte();
+				Instruments[i].DefaultPan             = br.ReadByte();
+				Instruments[i].RandomVolumeVariation  = br.ReadByte();
+				Instruments[i].RandomPanningVariation = br.ReadByte();
+				Instruments[i].TrackerVersion         = br.ReadInt16();
+				Instruments[i].NumAssociatedSamples   = br.ReadByte();
+				br.BaseStream.Position += 1; // Skip 1 byte (unused)
+				Instruments[i].InstrumentName         = new string(br.ReadChars(26));
+				Instruments[i].InitialFilterCutoff    = br.ReadByte();
+				Instruments[i].InitialFilterResonance = br.ReadByte();
+				Instruments[i].MidiChannel            = br.ReadByte();
+				Instruments[i].MidiProgram            = br.ReadByte();
+				Instruments[i].MidiBank               = br.ReadInt16();
+
+				// Set up the note/sample keyboard table.
+				// These are read in pairs.
+				Instruments[i].KeyboardTable = new KeyboardTablePair[120];
+				for (int j = 0; j < Instruments[i].KeyboardTable.Length;)
+				{
+					Instruments[i].KeyboardTable[j++].Note   = br.ReadByte();
+					Instruments[i].KeyboardTable[j++].Sample = br.ReadByte();
+				}
+
+				// Now finally read the envelopes.
+				// There are always three of these per instrument.
+				Instruments[i].Envelopes = new Envelope[3];
+				for (int j = 0; j < Instruments[i].Envelopes.Length; j++)
+				{
+					// Envelope flags
+					byte flags = br.ReadByte();
+					Instruments[i].Envelopes[j].EnvelopeEnabled = ((flags & 1) != 0);
+					Instruments[i].Envelopes[j].Looping         = ((flags & 2) != 0);
+					Instruments[i].Envelopes[j].SustainLoop     = ((flags & 4) != 0);
+					if (j == 2) // Pitch envelope
+						Instruments[i].Envelopes[j].UseAsFilter = ((flags & 128) != 0);
+
+					// Total node points
+					Instruments[i].Envelopes[j].NumNodePoints = br.ReadByte();
+
+					// Looping values
+					Instruments[i].Envelopes[j].LoopBeginning        = br.ReadByte();
+					Instruments[i].Envelopes[j].LoopEnd              = br.ReadByte();
+					Instruments[i].Envelopes[j].SustainLoopBeginning = br.ReadByte();
+					Instruments[i].Envelopes[j].SustainLoopEnd       = br.ReadByte();
+
+					// Set up the node points.
+					int numNodePoints = Instruments[i].Envelopes[j].NumNodePoints;
+					Instruments[i].Envelopes[j].NodePoints = new EnvelopeNodePoint[numNodePoints];
+					for (int k = 0; k < numNodePoints - 1; k++)
+					{
+						Instruments[i].Envelopes[j].NodePoints[k].YValue     = br.ReadSByte();
+						Instruments[i].Envelopes[j].NodePoints[k].TickNumber = br.ReadInt16();
+					}
+				}
+			}
+
+			// 7 bytes are wasted per instrument.
+			br.BaseStream.Position += 7;
+		}
+
+		#region Instrument Structure
+
+		/// <summary>
+		/// Represents a single instrument in this module.
+		/// </summary>
+		public struct Instrument
+		{
+			/// <summary>Instrument header magic</summary>
+			public string InstrumentID { get; internal set; }
+
+			/// <summary>DOS filename</summary>
+			public string DOSFilename { get; internal set; }
+
+			/// <summary>
+			/// The specified instrument's new note action
+			/// </summary>
+			/// <value>
+			/// <para>0 = Cut note </para>
+			/// <para>1 = Continue </para>
+			/// <para>2 = Note off </para>
+			/// <para>3 = Note fade.</para>
+			/// </value>
+			public int NewNoteAction { get; internal set; }
+
+			/// <summary>
+			/// The Duplicate Check Type of an instrument
+			/// </summary>
+			/// <value>
+			/// <para>0 = Off</para>
+			/// <para>1 = Note</para>
+			/// <para>2 = Sample</para>
+			/// <para>3 = Instrument</para>
+			/// </value>
+			public int DuplicateCheckType { get; internal set; }
+
+			/// <summary>
+			/// The Duplicate Check Action (DCA) of the specified instrument
+			/// </summary>
+			/// <value>
+			/// <para>0 = Cut </para>
+			/// <para>1 = Note Off </para>
+			/// <para>2 = Note Fade </para>
+			/// </value>
+			public int DuplicateCheckAction { get; internal set; }
+
+			/// <summary>
+			/// Fadeout of an instrument.
+			/// Ranges between (0 - 128)
+			/// </summary>
+			/// <remarks>
+			/// Fade applied when:
+			/// <para>1) Note fade NNA is selected and triggered (by another note)</para>
+			/// <para>2) Note off NNA is selected with no volume envelope or volume envelope loop</para>
+			/// <para>3) Volume envelope end is reached</para>
+			/// </remarks>
+			/// <value>The fadeout length (0 - 128)</value>
+			public int FadeOut { get; internal set; }
+
+			/// <summary>
+			/// The Pitch-Pan separation of a specified instrument
+			/// </summary>
+			/// <returns>
+			/// The PPS of the instrument (-32 - 32)
+			/// </returns>
+			public sbyte PitchPanSeparation { get; internal set; }
+
+			/// <summary>
+			/// Pitch-pan center
+			/// </summary>
+			public byte PitchPanCenter { get; internal set; }
+
+			/// <summary>
+			/// Global volume
+			/// </summary>
+			/// <value>From 0 to 128</value>
+			public byte GlobalVolume { get; internal set; }
+
+			/// <summary>
+			/// Default panning value
+			/// </summary>
+			/// <value>From 0 to 64. 128 means it's unused.</value>
+			public byte DefaultPan { get; internal set; }
+
+			/// <summary>
+			/// Random volume variation (percentage)
+			/// </summary>
+			public byte RandomVolumeVariation { get; internal set; }
+
+			/// <summary>
+			/// Random panning variation (panning change - not implemented yet)
+			/// </summary>
+			public byte RandomPanningVariation { get; internal set; }
+
+			/// <summary>
+			/// Tracker version used to save the instrument.
+			/// This is only used in the instrument files.
+			/// </summary>
+			public short TrackerVersion { get; internal set; }
+
+			/// <summary>
+			/// Number of samples associated with instrument.
+			/// This is only used in the instrument files.
+			/// </summary>
+			public byte NumAssociatedSamples { get; internal set; }
+
+			/// <summary>
+			/// Instrument name
+			/// </summary>
+			public string InstrumentName { get; internal set; }
+
+			/// <summary>
+			/// Initial filter cutoff
+			/// </summary>
+			public byte InitialFilterCutoff { get; internal set; }
+
+			/// <summary>
+			/// Initial filter resonance
+			/// </summary>
+			public byte InitialFilterResonance { get; internal set; }
+
+			/// <summary>
+			/// MIDI channel number
+			/// </summary>
+			public int MidiChannel { get; internal set; }
+
+			/// <summary>
+			/// MIDI Program (instrument)
+			/// </summary>
+			public short MidiProgram { get; internal set; }
+
+			/// <summary>
+			/// MIDI Bank? Purpose not explained in the format documentation. (only referred to as MidiBnk)
+			/// TODO: Figure out wtf this is used for and document it.
+			/// </summary>
+			public short MidiBank { get; internal set; }
+
+			/// <summary>
+			/// Each note of the instrument is first converted to a sample number
+			/// and a note (C-0 -> B-9). These are stored as note/sample byte pairs
+			/// (note first, range 0->119 for C-0 to B-9, sample ranges from 1-99, 0=no sample)
+			/// </summary>
+			/// <remarks>
+			/// Overall, this table is 240 bytes in length if it were to be read entirely
+			/// in one pass, instead of being broken into struct pairs.
+			/// </remarks>
+			public KeyboardTablePair[] KeyboardTable { get; internal set; }
+
+			/// <summary>
+			/// Instrument envelopes
+			/// </summary>
+			public Envelope[] Envelopes { get; internal set; }
+		}
+
+		/// <summary>
+		/// Instrument Note/Sample keyboard table pair.
+		/// </summary>
+		public struct KeyboardTablePair
+		{
+			/// <summary>Note byte</summary>
+			public byte Note { get; internal set; }
+
+			/// <summary>Sample byte</summary>
+			public byte Sample { get; internal set; }
+		}
+
+		/// <summary>
+		/// Represents an instrument envelope.
+		/// </summary>
+		/// <remarks>
+		/// Within an instrument, three envelopes are present:
+		/// <para>One for volume</para>
+		/// <para>One for panning</para>
+		/// <para>One for pitch</para>
+		/// </remarks>
+		public struct Envelope
+		{
+			/// <summary>Whether or not this envelope is enabled</summary>
+			public bool EnvelopeEnabled { get; internal set; }
+
+			/// <summary>Whether or not to loop this envelope</summary>
+			public bool Looping { get; internal set; }
+
+			/// <summary>Whether or not to sustain the loop</summary>
+			public bool SustainLoop { get; internal set; }
+
+			/// <summary>Whether or not to use this envelope as a filter envelope (pitch envelope only)</summary>
+			public bool UseAsFilter { get; internal set; }
+
+			/// <summary>Number of node points in this envelope</summary>
+			public int NumNodePoints { get; internal set; }
+
+			/// <summary>Loop beginning</summary>
+			public int LoopBeginning { get; internal set; }
+
+			/// <summary>Loop end</summary>
+			public int LoopEnd { get; internal set; }
+
+			/// <summary>Sustain loop beginning</summary>
+			public int SustainLoopBeginning { get; internal set; }
+
+			/// <summary>Sustain loop end</summary>
+			public int SustainLoopEnd { get; internal set; }
+
+			/// <summary>
+			/// Envelope node points
+			/// </summary>
+			public EnvelopeNodePoint[] NodePoints { get; internal set; }
+		}
+
+		/// <summary>
+		/// Node point for an instrument envelope.
+		/// </summary>
+		public struct EnvelopeNodePoint
+		{
+			/// <summary>
+			/// Y Value.
+			/// </summary>
+			/// <remarks>
+			/// (0->64 for vol, -32->+32 for panning or pitch)
+			/// </remarks>
+			public sbyte YValue { get; internal set; }
+
+			/// <summary>
+			/// Tick number
+			/// </summary>
+			public short TickNumber { get; internal set; }
+		}
+
+		#endregion
+		#endregion
+
+		#region Samples
+
+		/// <summary>
+		/// Samples within this module file.
+		/// </summary>
+		public Sample[] Samples
+		{
+			get;
+			private set;
+		}
+
+		private void ParseSamples(BinaryReader br)
+		{
+			// Initialize sample array
+			Samples = new Sample[TotalSamples];
+
+			// Locate start of the sample data.
+			int initialLoc = 0xC0 + TotalOrders + (TotalInstruments*4);
+			br.BaseStream.Position = initialLoc;
+			int offset = br.ReadInt16();
+			br.BaseStream.Position = offset; // Start of the first sample.
+
+			// Read in all of the sample data.
+			for (int i = 0; i < TotalSamples-1; i++)
+			{
+				Samples[i].SampleID = new string(br.ReadChars(4));
+				Samples[i].DOSFilename = new string(br.ReadChars(13));
+				Samples[i].GlobalVolume = br.ReadByte();
+
+				// Flags
+				byte flags = br.ReadByte();
+				Samples[i].Is16Bit                   = ((flags &   2) != 0);
+				Samples[i].IsStereo                  = ((flags &   4) != 0);
+				Samples[i].CompressedSamples         = ((flags &   8) != 0);
+				Samples[i].IsLooped                  = ((flags &  16) != 0);
+				Samples[i].UsesSustainedLoop         = ((flags &  32) != 0);
+				Samples[i].UsesPingPongLoop          = ((flags &  64) != 0);
+				Samples[i].UsesSustainedPingPongLoop = ((flags & 128) != 0);
+
+				Samples[i].DefaultVolume = br.ReadByte();
+				Samples[i].SampleName    = new string(br.ReadChars(26));
+
+				// Convert flag
+				byte convert = br.ReadByte();
+				Samples[i].UsesUnsignedSamples = ((convert & 1) != 0);
+
+				// Default panning bits
+				Samples[i].DefaultPanBits = br.ReadByte();
+
+				// Length and loop related
+				Samples[i].Length             = br.ReadInt32();
+				Samples[i].LoopBegin          = br.ReadInt32();
+				Samples[i].LoopEnd            = br.ReadInt32();
+				Samples[i].C5Seconds          = br.ReadInt32();
+				Samples[i].SustainedLoopBegin = br.ReadInt32();
+				Samples[i].SustainedLoopEnd   = br.ReadInt32();
+				Samples[i].SamplePointer      = br.ReadInt32();
+
+				// Vibrato
+				Samples[i].VibratoSpeed = br.ReadByte();
+				Samples[i].VibratoDepth = br.ReadByte();
+				Samples[i].VibratoRate  = br.ReadByte();
+				Samples[i].VibratoType  = br.ReadByte();
 			}
 		}
+
+		#region Sample Structure
+
+		/// <summary>
+		/// Represents an audio sample.
+		/// </summary>
+		public struct Sample
+		{
+			/// <summary>
+			/// Sample header ID
+			/// </summary>
+			public string SampleID { get; internal set; }
+
+			/// <summary>
+			/// DOS filename
+			/// </summary>
+			public string DOSFilename { get; internal set; }
+
+			/// <summary>
+			/// Global volume for instrument
+			/// <para>Ranges from 0-64</para>
+			/// </summary>
+			public int GlobalVolume { get; internal set; }
+
+			/// <summary>
+			/// Whether or not this sample is associated with the header.
+			/// </summary>
+			public bool SampleAssocWithHeader { get; internal set; }
+
+			/// <summary>
+			/// Whether or not this sample is 16-bits.
+			/// <para>If false, then this sample is 8-bit.</para>
+			/// </summary>
+			public bool Is16Bit { get; internal set; }
+
+			/// <summary>
+			/// Whether or not this sample is stereo.
+			/// <para>If false, then this sample is mono.</para>
+			/// </summary>
+			public bool IsStereo { get; internal set; }
+
+			/// <summary>
+			/// Whether or not this sample is compressed.
+			/// </summary>
+			public bool CompressedSamples { get; internal set; }
+
+			/// <summary>
+			/// Whether or not this sample is looped.
+			/// </summary>
+			public bool IsLooped { get; internal set; }
+
+			/// <summary>
+			/// Whether or not this sample uses a sustained loop.
+			/// </summary>
+			public bool UsesSustainedLoop { get; internal set; }
+
+			/// <summary>
+			/// Whether or not this sample uses a ping-pong loop.
+			/// <para>If false, then this sample uses a forwards loop.</para>
+			/// </summary>
+			public bool UsesPingPongLoop { get; internal set; }
+
+			/// <summary>
+			/// Whether or not this sample uses a sustained ping-pong loop.
+			/// <para>If false, then this sample uses a sustained forwards loop.</para>
+			/// </summary>
+			public bool UsesSustainedPingPongLoop { get; internal set; }
+
+			/// <summary>
+			/// The default volume for this instrument.
+			/// </summary>
+			public int DefaultVolume { get; internal set; }
+
+			/// <summary>
+			/// Name of this sample.
+			/// </summary>
+			public string SampleName { get; internal set; }
+
+			/// <summary>
+			/// Whether or not this sample uses unsigned samples.
+			/// <para>If false, then this sample uses signed samples.</para>
+			/// </summary>
+			public bool UsesUnsignedSamples { get; internal set; }
+
+			/// <summary>
+			/// Default Panning Bits 0->6 = Pan value, Bit 7 ON to USE (opposite of inst)
+			/// </summary>
+			public byte DefaultPanBits { get; internal set; }
+
+			/// <summary>
+			/// Length of the sample instrument in number of samples.
+			/// </summary>
+			public int Length { get; internal set; }
+
+			/// <summary>
+			/// Start of loop (number of samples in)
+			/// </summary>
+			public int LoopBegin { get; internal set; }
+
+			/// <summary>
+			/// Sample number after the end of the loop.
+			/// </summary>
+			public int LoopEnd { get; internal set; }
+
+			/// <summary>
+			/// Number of bytes a second for C-5 (ranges from 0->9999999)
+			/// </summary>
+			public int C5Seconds { get; internal set; }
+
+			/// <summary>
+			/// Start of sustain loop (number of samples in)
+			/// </summary>
+			public int SustainedLoopBegin { get; internal set; }
+
+			/// <summary>
+			/// Sample number after the end of the sustain loop.
+			/// </summary>
+			public int SustainedLoopEnd { get; internal set; }
+
+			/// <summary>
+			/// Offset of the sample in the file.
+			/// </summary>
+			public int SamplePointer { get; internal set; }
+
+			/// <summary>
+			/// Vibrato Speed, ranges from 0->64
+			/// </summary>
+			public int VibratoSpeed { get; internal set; }
+
+			/// <summary>
+			/// Vibrato Depth, ranges from 0->64
+			/// </summary>
+			public int VibratoDepth { get; internal set; }
+
+			/// <summary>
+			/// The vibrato waveform type of the sample.
+			/// </summary>
+			/// <value>
+			/// <para>0 = Sine wave </para>
+			/// <para>1 = Ramp down </para>
+			/// <para>2 = Square wave </para>
+			/// <para>3 = Random (speed is irrelevant) </para>
+			/// </value>
+			public int VibratoType { get; internal set; }
+
+			/// <summary>
+			/// Vibrato Rate, rate at which vibrato is applied (0->64)
+			/// </summary>
+			public int VibratoRate { get; internal set; }
+		}
+
+		#endregion
 
 		#endregion
 	}
