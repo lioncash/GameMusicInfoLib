@@ -1,11 +1,7 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
+﻿using System.IO;
 
 namespace GameMusicInfoReader.Modules
 {
-	// TODO: Possibly more sample reading.
-
 	/// <summary>
 	/// A reader for Impulse Tracker modules
 	/// </summary>
