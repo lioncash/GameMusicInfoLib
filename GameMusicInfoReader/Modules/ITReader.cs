@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
 
 namespace GameMusicInfoReader.Modules
 {
@@ -427,7 +429,7 @@ namespace GameMusicInfoReader.Modules
 			br.BaseStream.Position = instrumentDataOffset; // Set position to the first instrument.
 
 			// Go over the instruments
-			for (int i = 0; i < TotalInstruments-1; i++)
+			for (int i = 0; i < TotalInstruments; i++)
 			{
 				Instruments[i].InstrumentID           = new string(br.ReadChars(4));
 				Instruments[i].DOSFilename            = new string(br.ReadChars(13));
@@ -454,10 +456,10 @@ namespace GameMusicInfoReader.Modules
 				// Set up the note/sample keyboard table.
 				// These are read in pairs.
 				Instruments[i].KeyboardTable = new KeyboardTablePair[120];
-				for (int j = 0; j < Instruments[i].KeyboardTable.Length;)
+				for (int j = 0; j < Instruments[i].KeyboardTable.Length; j++)
 				{
-					Instruments[i].KeyboardTable[j++].Note   = br.ReadByte();
-					Instruments[i].KeyboardTable[j++].Sample = br.ReadByte();
+					Instruments[i].KeyboardTable[j].Note   = br.ReadByte();
+					Instruments[i].KeyboardTable[j].Sample = br.ReadByte();
 				}
 
 				// Now finally read the envelopes.
@@ -483,9 +485,9 @@ namespace GameMusicInfoReader.Modules
 					Instruments[i].Envelopes[j].SustainLoopEnd       = br.ReadByte();
 
 					// Set up the node points.
-					int numNodePoints = Instruments[i].Envelopes[j].NumNodePoints;
-					Instruments[i].Envelopes[j].NodePoints = new EnvelopeNodePoint[numNodePoints];
-					for (int k = 0; k < numNodePoints; k++)
+					const int totalNodeSets = 25;
+					Instruments[i].Envelopes[j].NodePoints = new EnvelopeNodePoint[totalNodeSets];
+					for (int k = 0; k < totalNodeSets; k++)
 					{
 						Instruments[i].Envelopes[j].NodePoints[k].YValue     = br.ReadSByte();
 						Instruments[i].Envelopes[j].NodePoints[k].TickNumber = br.ReadInt16();
@@ -751,7 +753,7 @@ namespace GameMusicInfoReader.Modules
 			br.BaseStream.Position = offset; // Start of the first sample.
 
 			// Read in all of the sample data.
-			for (int i = 0; i < TotalSamples-1; i++)
+			for (int i = 0; i < TotalSamples; i++)
 			{
 				Samples[i].SampleID = new string(br.ReadChars(4));
 				Samples[i].DOSFilename = new string(br.ReadChars(13));
