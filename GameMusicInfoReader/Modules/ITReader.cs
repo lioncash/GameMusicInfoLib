@@ -491,10 +491,10 @@ namespace GameMusicInfoReader.Modules
 						Instruments[i].Envelopes[j].NodePoints[k].TickNumber = br.ReadInt16();
 					}
 				}
+				
+				// 7 bytes are wasted per instrument.
+				br.BaseStream.Position += 7;
 			}
-
-			// 7 bytes are wasted per instrument.
-			br.BaseStream.Position += 7;
 		}
 
 		#region Instrument Structure
