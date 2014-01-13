@@ -34,7 +34,7 @@ namespace GameMusicInfoReader.Modules
 				IsStereo                = ((flag &  1) != 0);
 				HasVol0MixOptimizations = ((flag &  2) != 0);
 				UsesInstruments         = ((flag &  4) != 0);
-				SlideType               = ((flag &  8) != 0) ? 1 : 0;
+				SlideType               = ((flag &  8) != 0) ? SlideTypes.Linear : SlideTypes.Amiga;
 				UsesOldEffects          = ((flag & 16) != 0);
 				LinkEffectMemory        = ((flag & 32) != 0);
 				UsesMidiPitchController = ((flag & 64) != 0);
@@ -188,10 +188,9 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// <para>1 if the module uses linear slides. </para>
-		/// <para>0 if the modules uses Amiga slides. </para>
+		/// Slide type used by this module.
 		/// </summary>
-		public int SlideType
+		public SlideTypes SlideType
 		{
 			get;
 			private set;
@@ -398,6 +397,15 @@ namespace GameMusicInfoReader.Modules
 			}
 
 			return channelVolumes;
+		}
+
+		/// <summary>
+		/// Slide type used by this module.
+		/// </summary>
+		public enum SlideTypes
+		{
+			Amiga,
+			Linear
 		}
 
 		#endregion
