@@ -485,7 +485,7 @@ namespace GameMusicInfoReader.Modules
 					// Set up the node points.
 					int numNodePoints = Instruments[i].Envelopes[j].NumNodePoints;
 					Instruments[i].Envelopes[j].NodePoints = new EnvelopeNodePoint[numNodePoints];
-					for (int k = 0; k < numNodePoints - 1; k++)
+					for (int k = 0; k < numNodePoints; k++)
 					{
 						Instruments[i].Envelopes[j].NodePoints[k].YValue     = br.ReadSByte();
 						Instruments[i].Envelopes[j].NodePoints[k].TickNumber = br.ReadInt16();
