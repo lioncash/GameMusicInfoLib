@@ -18,7 +18,7 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="path">The path to an MT2 module.</param>
 		public MT2Reader(string path)
 		{
-			using(BinaryReader mtt = new BinaryReader(File.OpenRead(path)))
+			using (var mtt = new BinaryReader(File.OpenRead(path)))
 			{
 				// Header
 				HeaderID = new string(mtt.ReadChars(4));
