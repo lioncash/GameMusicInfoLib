@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace GameMusicInfoReader.Modules
+namespace GameMusicInfoReader.Modules.Xm
 {
 	/// <summary>
 	/// Reader for XM module files

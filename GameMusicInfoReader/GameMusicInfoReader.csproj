@@ -38,18 +38,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GbsReader.cs" />
-    <Compile Include="Modules\AmdReader.cs" />
-    <Compile Include="Modules\AmsReader.cs" />
-    <Compile Include="Modules\DbmReader.cs" />
-    <Compile Include="Modules\ITReader.cs" />
-    <Compile Include="Modules\ModReader.cs" />
-    <Compile Include="Modules\MT2Reader.cs" />
-    <Compile Include="Modules\PlmReader.cs" />
-    <Compile Include="Modules\PtmReader.cs" />
-    <Compile Include="Modules\S3MReader.cs" />
-    <Compile Include="Modules\SixSixNineReader.cs" />
-    <Compile Include="Modules\StmReader.cs" />
-    <Compile Include="Modules\XMReader.cs" />
+    <Compile Include="Modules\Amd\AmdReader.cs" />
+    <Compile Include="Modules\Ams\AmsReader.cs" />
+    <Compile Include="Modules\Dbm\DbmReader.cs" />
+    <Compile Include="Modules\It\ITReader.cs" />
+    <Compile Include="Modules\Mod\ModReader.cs" />
+    <Compile Include="Modules\Mt2\MT2Reader.cs" />
+    <Compile Include="Modules\Plm\PlmReader.cs" />
+    <Compile Include="Modules\Ptm\PtmReader.cs" />
+    <Compile Include="Modules\S3m\S3MReader.cs" />
+    <Compile Include="Modules\SixSixNine\SixSixNineReader.cs" />
+    <Compile Include="Modules\Stm\StmReader.cs" />
+    <Compile Include="Modules\Xm\XMReader.cs" />
     <Compile Include="NsfReader.cs" />
     <Compile Include="PsfReader.cs" />
     <Compile Include="SapReader.cs" />

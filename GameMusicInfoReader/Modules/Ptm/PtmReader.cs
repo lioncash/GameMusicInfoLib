@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace GameMusicInfoReader.Modules
+namespace GameMusicInfoReader.Modules.Ptm
 {
 	/// <summary>
 	/// Reader for getting info from Polytracker PTM modules.

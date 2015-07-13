@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Text;
 
-namespace GameMusicInfoReader.Modules
+namespace GameMusicInfoReader.Modules.Stm
 {
 	/// <summary>
 	/// Reader for getting info from ScreamTracker 2.x modules.

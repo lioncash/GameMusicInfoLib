@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 
-namespace GameMusicInfoReader.Modules
+namespace GameMusicInfoReader.Modules.Mt2
 {
 	/// <summary>
 	/// Reader for getting info from MadTracker 2 modules.

@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace GameMusicInfoReader.Modules
+namespace GameMusicInfoReader.Modules.Ams
 {
 	/// <summary>
 	/// A reader for getting info from ExtremeTracker modules.

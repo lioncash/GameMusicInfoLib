@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Text;
 
-namespace GameMusicInfoReader.Modules
+namespace GameMusicInfoReader.Modules.Mod
 {
 	/// <summary>
 	/// Reader for getting info from Protracker MOD modules.

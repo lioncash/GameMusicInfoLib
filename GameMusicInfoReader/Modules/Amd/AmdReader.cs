@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Text;
 
-namespace GameMusicInfoReader.Modules
+namespace GameMusicInfoReader.Modules.Amd
 {
 	/// <summary>
 	/// A reader for getting info from AMusic AMD files.

@@ -6,7 +6,7 @@ using System.IO;
 // TODO: Pattern chunk reading.
 // TODO: Sample chunk reading.
 // TODO: Volume Envelope chunk reading.
-namespace GameMusicInfoReader.Modules
+namespace GameMusicInfoReader.Modules.Dbm
 {
 	/// <summary>
 	/// Class for reading info from Digibooster Pro modules.

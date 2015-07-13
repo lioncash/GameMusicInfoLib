@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Text;
 
-namespace GameMusicInfoReader.Modules
+namespace GameMusicInfoReader.Modules.Plm
 {
 	/// <summary>
 	/// Reader for Disorder Tracker 2 modules

@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace GameMusicInfoReader.Modules
+namespace GameMusicInfoReader.Modules.S3m
 {
 	/// <summary>
 	/// Reader for getting info from S3M modules.

@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace GameMusicInfoReader.Modules
+namespace GameMusicInfoReader.Modules.It
 {
 	/// <summary>
 	/// A reader for Impulse Tracker modules
