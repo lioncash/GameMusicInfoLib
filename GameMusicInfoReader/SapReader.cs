@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace GameMusicInfoReader
@@ -135,7 +136,7 @@ namespace GameMusicInfoReader
 		{
 			// Get the index of the indexOf tag so we know where to start
 			// within the file for getting the desired metadata.
-			int index = contents.IndexOf(indexOf);
+			int index = contents.IndexOf(indexOf, StringComparison.InvariantCulture);
 
 			// Error handling in case a tag isn't present in a file
 			if (index == -1)
