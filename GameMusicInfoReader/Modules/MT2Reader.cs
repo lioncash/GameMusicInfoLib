@@ -478,6 +478,11 @@ namespace GameMusicInfoReader.Modules
 			/// The actual comment.
 			/// </summary>
 			public string Comment { get; internal set; }
+
+			public override string ToString()
+			{
+				return Comment;
+			}
 		}
 
 		/// <summary>
@@ -494,6 +499,11 @@ namespace GameMusicInfoReader.Modules
 			/// Build summary content.
 			/// </summary>
 			public string Content { get; internal set; }
+
+			public override string ToString()
+			{
+				return Content;
+			}
 		}
 
 		#endregion
