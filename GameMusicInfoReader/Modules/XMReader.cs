@@ -7,6 +7,21 @@ namespace GameMusicInfoReader.Modules
 	/// </summary>
 	public sealed class XMReader
 	{
+		#region Enums
+
+		/// <summary>
+		/// Defines possible frequency table types.
+		/// </summary>
+		public enum FrequencyTableType
+		{
+			/// <summary>Amiga frequency table</summary>
+			Amiga,
+			/// <summary>Linear frequency table</summary>
+			Linear
+		}
+
+		#endregion
+
 		#region Constructor
 
 		/// <summary>
@@ -41,10 +56,10 @@ namespace GameMusicInfoReader.Modules
 
 				// Flags
 				int freqType = xm.ReadInt16() & 0xFF;
-				if ((freqType & 1) != 0)
-					FreqTableType = 1;
+				if ((freqType & 1) == 0)
+					FreqTableType = FrequencyTableType.Amiga;
 				else
-					FreqTableType = 0;
+					FreqTableType = FrequencyTableType.Linear;
 
 				// Defaults
 				DefaultTempo = xm.ReadUInt16();
@@ -137,7 +152,7 @@ namespace GameMusicInfoReader.Modules
 		/// If bit 0 is set: Amiga frequency table is used.
 		/// If bit 0 is not set: Linear frequency table is used.
 		/// </summary>
-		public int FreqTableType
+		public FrequencyTableType FreqTableType
 		{
 			get;
 			private set;
