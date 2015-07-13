@@ -23,7 +23,7 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="file">Path to the DBM module to open.</param>
 		public DbmReader(string file)
 		{
-			using (BinaryReader dbm = new BinaryReader(File.OpenRead(file)))
+			using (var dbm = new BinaryReader(File.OpenRead(file)))
 			{
 				// Header
 				HeaderID = new string(dbm.ReadChars(4));

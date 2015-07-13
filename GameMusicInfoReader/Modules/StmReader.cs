@@ -16,23 +16,16 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="path">Path to an STM module</param>
 		public StmReader(string path)
 		{
-			using (FileStream stm = File.OpenRead(path))
+			using (var stm = new BinaryReader(File.OpenRead(path)))
 			{
-				// Song name
-				byte[] songName = new byte[20];
-				stm.Read(songName, 0, songName.Length);
-				SongName = Encoding.UTF8.GetString(songName);
-
-				// Tracker name
-				byte[] trackerName = new byte[8];
-				stm.Read(trackerName, 0, trackerName.Length);
-				TrackerName = Encoding.UTF8.GetString(trackerName);
+				SongName    = Encoding.UTF8.GetString(stm.ReadBytes(20));
+				TrackerName = Encoding.UTF8.GetString(stm.ReadBytes(8));
 
 				// Filetype
 				FileType = stm.ReadByte();
 
 				// Tempo
-				stm.Seek(0x20, SeekOrigin.Begin);
+				stm.BaseStream.Seek(0x20, SeekOrigin.Begin);
 				Tempo = stm.ReadByte();
 
 				// Total patterns

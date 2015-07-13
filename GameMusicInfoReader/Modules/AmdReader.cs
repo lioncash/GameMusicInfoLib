@@ -14,19 +14,13 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="path">The path to the AMD module.</param>
 		public AmdReader(string path)
 		{
-			using (FileStream amd = File.OpenRead(path))
+			using (var amd = new BinaryReader(File.OpenRead(path)))
 			{
-				// Song name
-				byte[] info = new byte[24];
-				amd.Read(info, 0, 24);
-				SongName = Encoding.UTF8.GetString(info);
-
-				// Artist name
-				amd.Read(info, 0, 24);
-				Artist = Encoding.UTF8.GetString(info);
+				SongName = Encoding.UTF8.GetString(amd.ReadBytes(24));
+				Artist   = Encoding.UTF8.GetString(amd.ReadBytes(24));
 
 				// Song length & total patterns
-				amd.Seek(0x3A4, SeekOrigin.Begin);
+				amd.BaseStream.Seek(0x3A4, SeekOrigin.Begin);
 				SongLength = amd.ReadByte();
 				TotalPatterns = amd.ReadByte();
 

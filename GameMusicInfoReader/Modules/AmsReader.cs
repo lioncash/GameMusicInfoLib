@@ -15,7 +15,7 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="path">Path to an AMS module.</param>
 		public AmsReader(string path)
 		{
-			using (BinaryReader br = new BinaryReader(File.OpenRead(path)))
+			using (var br = new BinaryReader(File.OpenRead(path)))
 			{
 				// Header
 				HeaderID = new string(br.ReadChars(7));

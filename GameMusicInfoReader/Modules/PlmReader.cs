@@ -14,24 +14,20 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="path">Path to a PLM module</param>
 		public PlmReader(string path)
 		{
-			using (FileStream plm = File.OpenRead(path))
+			using (var plm = new BinaryReader(File.OpenRead(path)))
 			{
 				// Header
-				byte[] header = new byte[4];
-				plm.Read(header, 0, header.Length);
-				HeaderID = Encoding.UTF8.GetString(header);
+				HeaderID = Encoding.UTF8.GetString(plm.ReadBytes(4));
 				HeaderSize = plm.ReadByte();
 
 				// Song name
-				byte[] songName = new byte[48];
-				plm.Read(songName, 0, songName.Length);
-				SongName = Encoding.UTF8.GetString(songName);
+				SongName = Encoding.UTF8.GetString(plm.ReadBytes(48));
 
 				// Total channels
 				TotalChannels = plm.ReadByte();
 
 				// Max Slide Volume
-				plm.Seek(0x38, SeekOrigin.Begin);
+				plm.BaseStream.Seek(0x38, SeekOrigin.Begin);
 				MaxSlideVolume = plm.ReadByte();
 
 				// Soundblaster amp

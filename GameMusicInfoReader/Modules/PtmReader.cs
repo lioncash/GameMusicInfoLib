@@ -15,7 +15,7 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="path">The path to the PTM module</param>
 		public PtmReader(string path)
 		{
-			using (BinaryReader ptm = new BinaryReader(File.OpenRead(path)))
+			using (var ptm = new BinaryReader(File.OpenRead(path)))
 			{
 				// Song name
 				SongName = new string(ptm.ReadChars(28));

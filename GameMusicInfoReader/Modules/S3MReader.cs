@@ -13,7 +13,7 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="path">Path to an S3M module.</param>
 		public S3MReader(string path)
 		{
-			using (BinaryReader s3m = new BinaryReader(File.OpenRead(path)))
+			using (var s3m = new BinaryReader(File.OpenRead(path)))
 			{
 				// Song title
 				SongTitle = new string(s3m.ReadChars(28));

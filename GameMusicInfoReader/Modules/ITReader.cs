@@ -13,7 +13,7 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="path">Path to an IT module</param>
 		public ITReader(string path)
 		{
-			using(BinaryReader br = new BinaryReader(File.OpenRead(path)))
+			using (var br = new BinaryReader(File.OpenRead(path)))
 			{
 				HeaderID = new string(br.ReadChars(4));
 				SongName = new string(br.ReadChars(26));

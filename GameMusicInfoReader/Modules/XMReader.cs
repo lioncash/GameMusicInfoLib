@@ -13,7 +13,7 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="path">Path to an XM module.</param>
 		public XMReader(string path)
 		{
-			using (BinaryReader xm = new BinaryReader(File.OpenRead(path)))
+			using (var xm = new BinaryReader(File.OpenRead(path)))
 			{
 				// Header
 				HeaderID = new string(xm.ReadChars(17));

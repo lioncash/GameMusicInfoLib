@@ -14,17 +14,10 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="path">Path to the 669 module.</param>
 		public SixSixNineReader(string path)
 		{
-			using (FileStream ssn = File.OpenRead(path))
+			using (var ssn = new BinaryReader(File.OpenRead(path)))
 			{
-				// Header
-				byte[] header = new byte[2];
-				ssn.Read(header, 0, header.Length);
-				HeaderID = Encoding.UTF8.GetString(header);
-
-				// Comment
-				byte[] comment = new byte[108];
-				ssn.Read(comment, 0, comment.Length);
-				Comment = Encoding.UTF8.GetString(comment);
+				HeaderID = Encoding.UTF8.GetString(ssn.ReadBytes(2));
+				Comment  = Encoding.UTF8.GetString(ssn.ReadBytes(108));
 
 				// Totals
 				TotalSamples = ssn.ReadByte();
