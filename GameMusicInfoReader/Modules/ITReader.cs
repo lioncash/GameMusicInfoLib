@@ -512,7 +512,7 @@ namespace GameMusicInfoReader.Modules
 		/// <summary>
 		/// Represents a single instrument in this module.
 		/// </summary>
-		public struct Instrument
+		public sealed class Instrument
 		{
 			/// <summary>Instrument header magic</summary>
 			public string InstrumentID { get; internal set; }
@@ -663,7 +663,7 @@ namespace GameMusicInfoReader.Modules
 		/// <summary>
 		/// Instrument Note/Sample keyboard table pair.
 		/// </summary>
-		public struct KeyboardTablePair
+		public sealed class KeyboardTablePair
 		{
 			/// <summary>Note byte</summary>
 			public byte Note { get; internal set; }
@@ -681,7 +681,7 @@ namespace GameMusicInfoReader.Modules
 		/// <para>One for panning</para>
 		/// <para>One for pitch</para>
 		/// </remarks>
-		public struct Envelope
+		public sealed class Envelope
 		{
 			/// <summary>Whether or not this envelope is enabled</summary>
 			public bool EnvelopeEnabled { get; internal set; }
@@ -719,7 +719,7 @@ namespace GameMusicInfoReader.Modules
 		/// <summary>
 		/// Node point for an instrument envelope.
 		/// </summary>
-		public struct EnvelopeNodePoint
+		public sealed class EnvelopeNodePoint
 		{
 			/// <summary>
 			/// Y Value.
@@ -809,7 +809,7 @@ namespace GameMusicInfoReader.Modules
 		/// <summary>
 		/// Represents an audio sample.
 		/// </summary>
-		public struct Sample
+		public sealed class Sample
 		{
 			/// <summary>
 			/// Sample header ID
