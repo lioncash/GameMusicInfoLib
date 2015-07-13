@@ -41,7 +41,12 @@
     <Compile Include="Modules\Amd\AmdReader.cs" />
     <Compile Include="Modules\Ams\AmsReader.cs" />
     <Compile Include="Modules\Dbm\DbmReader.cs" />
+    <Compile Include="Modules\It\Envelope.cs" />
+    <Compile Include="Modules\It\EnvelopeNodePoint.cs" />
+    <Compile Include="Modules\It\Instrument.cs" />
     <Compile Include="Modules\It\ITReader.cs" />
+    <Compile Include="Modules\It\KeyboardTablePair.cs" />
+    <Compile Include="Modules\It\Sample.cs" />
     <Compile Include="Modules\Mod\ModReader.cs" />
     <Compile Include="Modules\Mt2\MT2Reader.cs" />
     <Compile Include="Modules\Plm\PlmReader.cs" />
