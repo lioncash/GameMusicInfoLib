@@ -7,21 +7,6 @@ namespace GameMusicInfoReader.Modules.Xm
 	/// </summary>
 	public sealed class XMReader
 	{
-		#region Enums
-
-		/// <summary>
-		/// Defines possible frequency table types.
-		/// </summary>
-		public enum FrequencyTableType
-		{
-			/// <summary>Amiga frequency table</summary>
-			Amiga,
-			/// <summary>Linear frequency table</summary>
-			Linear
-		}
-
-		#endregion
-
 		#region Constructor
 
 		/// <summary>
@@ -119,7 +104,7 @@ namespace GameMusicInfoReader.Modules.Xm
 		}
 
 		/// <summary>
-		/// The totoal number of channels in this XM file.
+		/// The total number of channels in this XM file.
 		/// </summary>
 		/// <remarks>Max of 32 channels</remarks>
 		public int TotalChannels
