@@ -16,12 +16,12 @@ namespace GameMusicInfoReader
 		/// <param name="path">File path to the SID file.</param>
 		public SidReader(string path)
 		{
-			using (BinaryReader sid = new BinaryReader(File.OpenRead(path)))
+			using (var sid = new EndianBinaryReader(File.OpenRead(path), Endian.Big))
 			{
 				// Get some flag values beforehand
 				// Video standard/chip model/BASIC flag
 				sid.BaseStream.Seek(0x76, SeekOrigin.Begin);
-				short flag = Endian.SwapInt16(sid.ReadInt16());
+				short flag = sid.ReadInt16();
 				VideoStandard = GetVideoStandard(flag);
 				ChipModel = GetChipModel(flag);
 				IsBasicFlagSet = BasicFlagIsSet(flag);
@@ -31,10 +31,10 @@ namespace GameMusicInfoReader
 				HeaderID = new string(sid.ReadChars(4));
 
 				// Version number (Shift because big-endian)
-				Version = Endian.SwapInt16(sid.ReadInt16());
+				Version = sid.ReadInt16();
 
 				// Offset to C64 binary data
-				DataOffset = Endian.SwapInt16(sid.ReadInt16());
+				DataOffset = sid.ReadInt16();
 
 				// Addresses
 				LoadAddress = GetLoadAddress(sid);
@@ -42,11 +42,11 @@ namespace GameMusicInfoReader
 				PlayAddress = GetPlayAddress(sid);
 
 				// Songs
-				Songs = Endian.SwapInt16(sid.ReadInt16());
-				StartSong = Endian.SwapInt16(sid.ReadInt16());
+				Songs = sid.ReadInt16();
+				StartSong = sid.ReadInt16();
 
 				// Speed integer
-				Speed = Endian.SwapInt32(sid.ReadInt32());
+				Speed = sid.ReadInt32();
 
 				// Song, Artist and Copyright
 				SongTitle = new string(sid.ReadChars(32));
@@ -216,9 +216,9 @@ namespace GameMusicInfoReader
 			return ((value & 2) != 0);
 		}
 
-		private short GetLoadAddress(BinaryReader sid)
+		private short GetLoadAddress(EndianBinaryReader sid)
 		{
-			short tempLoadAddr = Endian.SwapInt16(sid.ReadInt16());
+			short tempLoadAddr = sid.ReadInt16();
 
 			// Looks like the data is stored in the original C64 data format.
 			// We have to read the first two bytes of data to get the address.
@@ -238,9 +238,9 @@ namespace GameMusicInfoReader
 			return tempLoadAddr;
 		}
 
-		private short GetInitAddress(BinaryReader sid)
+		private short GetInitAddress(EndianBinaryReader sid)
 		{
-			short temp = Endian.SwapInt16(sid.ReadInt16());
+			short temp = sid.ReadInt16();
 
 			// Init address must be zero for RSID files with the BASIC flag set
 			if (HeaderID.Contains("RSID") && IsBasicFlagSet)
@@ -249,59 +249,41 @@ namespace GameMusicInfoReader
 			// If temp is zero, then InitAddress = LoadAddress
 			if (temp == 0)
 				return LoadAddress;
-			else
-				return temp;
+
+			return temp;
 		}
 
-		private static short GetPlayAddress(BinaryReader sid)
+		private static short GetPlayAddress(EndianBinaryReader sid)
 		{
-			return Endian.SwapInt16(sid.ReadInt16());
+			return sid.ReadInt16();
 		}
 
 		private static string GetVideoStandard(short value)
 		{
-			// If bit 2 is set, but bit 3 isn't
 			if ((value & 4) != 0 && (value & 8) == 0)
-			{
 				return "PAL";
-			}
-			// if bit 2 isn't set, but bit 3 is
-			else if ((value & 4) == 0 && (value & 8) != 0)
-			{
+
+			if ((value & 4) == 0 && (value & 8) != 0)
 				return "NTSC";
-			}
-			// if both bit 2 and 3 aren't set
-			else if ((value & 4) != 0 && (value & 8) != 0)
-			{
+
+			if ((value & 4) != 0 && (value & 8) != 0)
 				return "PAL and NTSC";
-			}
-			else
-			{
-				return "Unknown";
-			}
+
+			return "Unknown";
 		}
 
 		private static string GetChipModel(short value)
 		{
-			// If bit 4 is set, but bit 5 isn't
 			if ((value & 16) != 0 && (value & 32) == 0)
-			{
 				return "MOS6581";
-			}
-			// If bit 4 isn't set, but bit 5 is
-			else if ((value & 16) == 0 && (value & 32) != 0)
-			{
+
+			if ((value & 16) == 0 && (value & 32) != 0)
 				return "MOS8580";
-			}
-			// If both bit 4 and 5 are set
-			else if ((value & 16) != 0 && (value & 32) != 0)
-			{
+
+			if ((value & 16) != 0 && (value & 32) != 0)
 				return "MOS6581 and MOS8580";
-			}
-			else
-			{
-				return "Unknown";
-			}
+
+			return "Unknown";
 		}
 	}
 }
