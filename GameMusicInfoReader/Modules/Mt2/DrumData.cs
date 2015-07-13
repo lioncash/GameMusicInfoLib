@@ -28,7 +28,7 @@
 		/// <summary>
 		/// Constructor
 		/// </summary>
-		public MT2DrumData()
+		public DrumData()
 		{
 			DrumSamples = new short[8];
 			PatternOrders = new byte[256];
