@@ -17,6 +17,8 @@ namespace GameMusicInfoReader.Modules
 		private const int NameChunkSize   = 52;
 		private const int InfoChunkSize   = 18;
 
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -54,6 +56,10 @@ namespace GameMusicInfoReader.Modules
 				NumChannels = BitConverter.IsLittleEndian ? dbm.ReadInt16()>>8 : dbm.ReadInt16();
 			}
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// Header identifier for DBM modules.
@@ -117,5 +123,7 @@ namespace GameMusicInfoReader.Modules
 			get;
 			private set;
 		}
+
+		#endregion
 	}
 }

@@ -8,6 +8,8 @@ namespace GameMusicInfoReader
 	/// </summary>
 	public sealed class SapReader
 	{
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -26,8 +28,11 @@ namespace GameMusicInfoReader
 			PlayerAddress = GetInfo(file, "PLAYER");
 			IsNtsc        = (GetInfo(file, "NTSC") != "Tag not present within file");
 			IsStereo      = (GetInfo(file, "STEREO") != "Tag not present within file");
-
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// The title of the song within the SAP file
@@ -119,6 +124,10 @@ namespace GameMusicInfoReader
 			private set;
 		}
 
+		#endregion
+
+		#region Helper Functions
+
 		/// <summary>
 		/// Parses tags the same way the method in PSFReader does.
 		/// </summary>
@@ -144,5 +153,7 @@ namespace GameMusicInfoReader
 			// It also removes the part of the string that is the 'indexOf' parameter
 			return news.Substring(0, nullIndex).Remove(0, indexOf.Length);
 		}
+
+		#endregion
 	}
 }

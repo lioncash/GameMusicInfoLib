@@ -9,6 +9,8 @@ namespace GameMusicInfoReader.Modules
 	{
 		// TODO: Read sample information
 
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -32,6 +34,10 @@ namespace GameMusicInfoReader.Modules
 				Panning = ptm.ReadByte();
 			}
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// The song name stored in the PTM file
@@ -97,5 +103,7 @@ namespace GameMusicInfoReader.Modules
 			get;
 			private set;
 		}
+
+		#endregion
 	}
 }

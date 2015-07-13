@@ -8,6 +8,8 @@ namespace GameMusicInfoReader.Modules
 	/// </summary>
 	public sealed class PlmReader
 	{
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -43,6 +45,10 @@ namespace GameMusicInfoReader.Modules
 				TotalOrders = plm.ReadByte();
 			}
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// Header identifier for PLM modules.
@@ -144,5 +150,7 @@ namespace GameMusicInfoReader.Modules
 			get;
 			private set;
 		}
+
+		#endregion
 	}
 }

@@ -7,6 +7,8 @@ namespace GameMusicInfoReader.Modules
 	/// </summary>
 	public sealed class S3MReader
 	{
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -44,6 +46,10 @@ namespace GameMusicInfoReader.Modules
 				IsStereo = ((s3m.ReadByte() & 0x80) != 0);
 			}
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// The song title of the S3M file
@@ -116,5 +122,7 @@ namespace GameMusicInfoReader.Modules
 			get;
 			private set;
 		}
+
+		#endregion
 	}
 }

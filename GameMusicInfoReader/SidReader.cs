@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Text;
 using GameMusicInfoReader.Util;
 
 namespace GameMusicInfoReader
@@ -9,7 +8,8 @@ namespace GameMusicInfoReader
 	/// </summary>
 	public sealed class SidReader
 	{
-		
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -54,6 +54,10 @@ namespace GameMusicInfoReader
 				Copyright = new string(sid.ReadChars(32));
 			}
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// Gets the 4 byte header magic as a string.
@@ -210,6 +214,10 @@ namespace GameMusicInfoReader
 			set;
 		}
 
+		#endregion
+
+		#region Helper Functions
+
 		// Checks if the BASIC flag is set for RSID files.
 		private static bool BasicFlagIsSet(short value)
 		{
@@ -285,5 +293,7 @@ namespace GameMusicInfoReader
 
 			return "Unknown";
 		}
+
+		#endregion
 	}
 }

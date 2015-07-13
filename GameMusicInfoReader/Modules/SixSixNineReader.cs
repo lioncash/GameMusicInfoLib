@@ -8,6 +8,8 @@ namespace GameMusicInfoReader.Modules
 	/// </summary>
 	public sealed class SixSixNineReader
 	{
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -27,6 +29,10 @@ namespace GameMusicInfoReader.Modules
 				LoopOrder = ssn.ReadByte();
 			}
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// The header magic of the 669 file.
@@ -80,5 +86,7 @@ namespace GameMusicInfoReader.Modules
 			get;
 			private set;
 		}
+
+		#endregion
 	}
 }

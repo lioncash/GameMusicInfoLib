@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 // TODO: Support multiline tags
 namespace GameMusicInfoReader
@@ -12,6 +11,8 @@ namespace GameMusicInfoReader
 	{
 		// Represents the tag data
 		private readonly string tag;
+
+		#region Constructor
 
 		/// <summary>
 		/// Constructor
@@ -76,6 +77,10 @@ namespace GameMusicInfoReader
 				}
 			}
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// Header ID string
@@ -168,47 +173,7 @@ namespace GameMusicInfoReader
 			get;
 			private set;
 		}
-		private string GetXSFRipper(string path)
-		{
-			// Ignore case and don't care about the culture
-			if (path.EndsWith("psf", true, null) 
-			|| path.EndsWith("psf2", true, null) 
-			|| path.EndsWith("minipsf", true, null) 
-			|| path.EndsWith("minipsf2", true, null))
-				return GetInfo("psfby=");
 
-			if (path.EndsWith("dsf", true, null)
-			|| path.EndsWith("minidsf", true, null))
-				return GetInfo("dsfby=");
-
-			if (path.EndsWith("gsf", true, null)
-			|| path.EndsWith("minigsf", true, null))
-				return GetInfo("gsfby=");
-
-			if (path.EndsWith("qsf", true, null)
-			|| path.EndsWith("miniqsf", true, null))
-				return GetInfo("qsfby=");
-
-			if (path.EndsWith("ssf", true, null)
-			|| path.EndsWith("minissf", true, null))
-				return GetInfo("ssfby=");
-
-			if (path.EndsWith("snsf", true, null)
-			|| path.EndsWith("minisnsf", true, null))
-				return GetInfo("snsfby=");
-
-			if (path.EndsWith("usf", true, null) 
-			|| path.EndsWith("miniusf", true, null))
-				return GetInfo("usfby=");
-
-			if (path.EndsWith("2sf", true, null)
-			|| path.EndsWith("mini2sf", true, null))
-				return GetInfo("2sfby=");
-
-			// This should never be returned, but is
-			// here just in case.
-			return "N/A";
-		}
 
 		/// <summary>
 		/// The relative volume of the xSF
@@ -270,6 +235,52 @@ namespace GameMusicInfoReader
 			private set;
 		}
 
+		#endregion
+
+		#region Helper Functions
+
+		private string GetXSFRipper(string path)
+		{
+			// Ignore case and don't care about the culture
+			if (path.EndsWith("psf", true, null) 
+			|| path.EndsWith("psf2", true, null) 
+			|| path.EndsWith("minipsf", true, null) 
+			|| path.EndsWith("minipsf2", true, null))
+				return GetInfo("psfby=");
+
+			if (path.EndsWith("dsf", true, null)
+			|| path.EndsWith("minidsf", true, null))
+				return GetInfo("dsfby=");
+
+			if (path.EndsWith("gsf", true, null)
+			|| path.EndsWith("minigsf", true, null))
+				return GetInfo("gsfby=");
+
+			if (path.EndsWith("qsf", true, null)
+			|| path.EndsWith("miniqsf", true, null))
+				return GetInfo("qsfby=");
+
+			if (path.EndsWith("ssf", true, null)
+			|| path.EndsWith("minissf", true, null))
+				return GetInfo("ssfby=");
+
+			if (path.EndsWith("snsf", true, null)
+			|| path.EndsWith("minisnsf", true, null))
+				return GetInfo("snsfby=");
+
+			if (path.EndsWith("usf", true, null) 
+			|| path.EndsWith("miniusf", true, null))
+				return GetInfo("usfby=");
+
+			if (path.EndsWith("2sf", true, null)
+			|| path.EndsWith("mini2sf", true, null))
+				return GetInfo("2sfby=");
+
+			// This should never be returned, but is
+			// here just in case.
+			return "N/A";
+		}
+
 		/// <summary>
 		/// Retrieves information specified by the indexOf string.
 		/// <para/>
@@ -327,10 +338,10 @@ namespace GameMusicInfoReader
 		// Basically it retrieves the relative location of the xSF driver files.
 		private List<string> ParseIncludedLibs()
 		{
-			List<string> res = new List<string>();
+			var res = new List<string>();
 
 			// TODO: Possibly improve this somehow
-			using (StringReader sr = new StringReader(tag))
+			using (var sr = new StringReader(tag))
 			{
 				string line;
 				while ((line = sr.ReadLine()) != null)
@@ -345,5 +356,7 @@ namespace GameMusicInfoReader
 
 			return res;
 		}
+
+		#endregion
 	}
 }

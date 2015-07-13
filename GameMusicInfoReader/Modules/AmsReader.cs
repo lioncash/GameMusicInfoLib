@@ -9,6 +9,8 @@ namespace GameMusicInfoReader.Modules
 	{
 		// TODO: Retrieving comments, sample info, etc
 
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -34,6 +36,10 @@ namespace GameMusicInfoReader.Modules
 				TotalVirtualMidiChannels = br.ReadUInt16();
 			}
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// The header identifier string.
@@ -83,5 +89,7 @@ namespace GameMusicInfoReader.Modules
 			get;
 			private set;
 		}
+
+		#endregion
 	}
 }

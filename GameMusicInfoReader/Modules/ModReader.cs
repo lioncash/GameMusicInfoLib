@@ -10,6 +10,8 @@ namespace GameMusicInfoReader.Modules
 	{
 		// TODO: More info?
 
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -31,6 +33,10 @@ namespace GameMusicInfoReader.Modules
 				ModuleID = Encoding.UTF8.GetString(mod.ReadBytes(4));
 			}
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// The song title of the MOD file
@@ -62,5 +68,7 @@ namespace GameMusicInfoReader.Modules
 			get;
 			private set;
 		}
+
+		#endregion
 	}
 }

@@ -7,13 +7,15 @@ namespace GameMusicInfoReader
 	/// </summary>
 	public sealed class SpcReader
 	{
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="path">Path to a SNES SPC file.</param>
 		public SpcReader(string path)
 		{
-			using (BinaryReader spc = new BinaryReader(File.OpenRead(path)))
+			using (var spc = new BinaryReader(File.OpenRead(path)))
 			{
 				// Header
 				HeaderID = new string(spc.ReadChars(33));
@@ -30,6 +32,10 @@ namespace GameMusicInfoReader
 				GetXid6Tags(spc);
 			}
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// The header magic for the SPC file.
@@ -131,6 +137,8 @@ namespace GameMusicInfoReader
 			get;
 			private set;
 		}
+
+		#endregion
 
 		#region ID666 Tag Reading
 

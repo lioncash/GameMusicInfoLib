@@ -7,13 +7,15 @@ namespace GameMusicInfoReader
 	/// </summary>
 	public sealed class NsfReader
 	{
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="path">Path to the NSF file.</param>
 		public NsfReader(string path)
 		{
-			using (BinaryReader nsf = new BinaryReader(File.OpenRead(path)))
+			using (var nsf = new BinaryReader(File.OpenRead(path)))
 			{
 				// Header + Version
 				HeaderID = new string(nsf.ReadChars(5));
@@ -52,6 +54,10 @@ namespace GameMusicInfoReader
 				IsUsingSunsoft       = ((chipByte & 32) != 0);
 			}
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// Reads the header identifier
@@ -209,5 +215,7 @@ namespace GameMusicInfoReader
 				return (IsUsingVrc6SoundChip || IsUsingVrc7SoundChip || IsUsingFdsAudio || IsUsingMMC5Audio || IsUsingNamco || IsUsingSunsoft);
 			}
 		}
+
+		#endregion
 	}
 }

@@ -8,6 +8,8 @@ namespace GameMusicInfoReader.Modules
 	/// </summary>
 	public sealed class AmdReader
 	{
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -25,10 +27,14 @@ namespace GameMusicInfoReader.Modules
 				TotalPatterns = amd.ReadByte();
 
 				// Version
-				amd.Seek(0x42F, SeekOrigin.Begin);
+				amd.BaseStream.Seek(0x42F, SeekOrigin.Begin);
 				Version = amd.ReadByte();
 			}
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// The name of the song within the module.
@@ -76,5 +82,7 @@ namespace GameMusicInfoReader.Modules
 			get;
 			private set;
 		}
+
+		#endregion
 	}
 }

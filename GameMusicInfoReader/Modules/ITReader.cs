@@ -7,6 +7,8 @@ namespace GameMusicInfoReader.Modules
 	/// </summary>
 	public sealed class ITReader
 	{
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -70,6 +72,8 @@ namespace GameMusicInfoReader.Modules
 				ParseSamples(br);
 			}
 		}
+
+		#endregion
 
 		#region Generic Info
 
@@ -344,7 +348,7 @@ namespace GameMusicInfoReader.Modules
 			private set;
 		}
 
-		private int GetTotalUsedChannels(BinaryReader br)
+		private static int GetTotalUsedChannels(BinaryReader br)
 		{
 			int count = 0;
 			br.BaseStream.Seek(0x40, SeekOrigin.Begin);

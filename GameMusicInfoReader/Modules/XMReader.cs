@@ -7,6 +7,8 @@ namespace GameMusicInfoReader.Modules
 	/// </summary>
 	public sealed class XMReader
 	{
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -49,6 +51,10 @@ namespace GameMusicInfoReader.Modules
 				DefaultBPM = xm.ReadUInt16();
 			}
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// The header magic of the module file.
@@ -154,5 +160,7 @@ namespace GameMusicInfoReader.Modules
 			get;
 			private set;
 		}
+
+		#endregion
 	}
 }

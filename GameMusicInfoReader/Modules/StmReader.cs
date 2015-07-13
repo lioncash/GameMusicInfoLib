@@ -10,6 +10,8 @@ namespace GameMusicInfoReader.Modules
 	{
 		// TODO: Get instrument information
 
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -35,6 +37,10 @@ namespace GameMusicInfoReader.Modules
 				GlobalVolume = stm.ReadByte();
 			}
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// The song name of the track in the STM module
@@ -93,5 +99,7 @@ namespace GameMusicInfoReader.Modules
 			get;
 			private set;
 		}
+
+		#endregion
 	}
 }

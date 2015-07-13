@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Text;
 
 namespace GameMusicInfoReader
 {
@@ -8,13 +7,15 @@ namespace GameMusicInfoReader
 	/// </summary>
 	public sealed class GbsReader
 	{
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="path">The path to a GBS file</param>
 		public GbsReader(string path)
 		{
-			using(BinaryReader gbs = new BinaryReader(File.OpenRead(path)))
+			using (var gbs = new BinaryReader(File.OpenRead(path)))
 			{
 				HeaderID = new string(gbs.ReadChars(3));
 				Version = gbs.ReadByte();
@@ -32,6 +33,10 @@ namespace GameMusicInfoReader
 				Copyright = new string(gbs.ReadChars(32));
 			}
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// The header magic of a GBS file.
@@ -149,5 +154,7 @@ namespace GameMusicInfoReader
 			get;
 			private set;
 		}
+
+		#endregion
 	}
 }
