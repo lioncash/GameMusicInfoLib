@@ -336,7 +336,7 @@ namespace GameMusicInfoReader.Modules.Mt2
 				{
 					case "TRKS":
 					{
-						TrackData data = new TrackData();
+						var data = new TrackData();
 						data.MasterVolume      = br.ReadInt16();
 						data.TrackVolume       = br.ReadInt16();
 						data.UsingEffectBuffer = br.ReadBoolean();
@@ -356,7 +356,7 @@ namespace GameMusicInfoReader.Modules.Mt2
 
 					case "MSG\0":
 					{
-						Message msg = new Message();
+						var msg = new Message();
 						msg.ShowComment = br.ReadBoolean();
 						msg.Comment = new string(br.ReadChars(size-1)); // -1 because ShowComment is part of the overall data
 
@@ -367,7 +367,7 @@ namespace GameMusicInfoReader.Modules.Mt2
 
 					case "SUM\0":
 					{
-						Summary summary = new Summary();
+						var summary = new Summary();
 						br.BaseStream.Position += 6; // Skip the hash, doubt it's needed.
 						summary.Content = new string(br.ReadChars(size-6)); // -6 since the hash is part of the data.
 
