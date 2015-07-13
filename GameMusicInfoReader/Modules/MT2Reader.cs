@@ -460,7 +460,7 @@ namespace GameMusicInfoReader.Modules
 			public int EffectID { get; internal set; }
 
 			/// <summary>
-			/// Track parameters;
+			/// Track parameters
 			/// </summary>
 			public short[] Parameters { get; internal set; }
 
