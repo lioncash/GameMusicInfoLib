@@ -424,16 +424,11 @@ namespace GameMusicInfoReader
 					{
 						int lengthOfSongName = spc.ReadInt16();
 
-						if (lengthOfSongName < 1 || lengthOfSongName > 0x100)
+						if (lengthOfSongName >= 1 && lengthOfSongName <= 0x100)
 						{
-							// Do nothing, invalid song name.
+							XidSong = new string(spc.ReadChars(lengthOfSongName));
 						}
-						else
-						{
-							char[] songNameChars = new char[lengthOfSongName];
-							spc.Read(songNameChars, 0, lengthOfSongName);
-							XidSong = new string(songNameChars);
-						}
+
 						break;
 					}
 
@@ -441,17 +436,11 @@ namespace GameMusicInfoReader
 					{
 						int lengthOfGameName = spc.ReadInt16();
 
-						if (lengthOfGameName < 1 || lengthOfGameName > 0x100)
+						if (lengthOfGameName >= 1 && lengthOfGameName <= 0x100)
 						{
-							// Do nothing, invalid length
+							XidGame = new string(spc.ReadChars(lengthOfGameName));
 						}
-						else
-						{
-							char[] gameNameChars = new char[lengthOfGameName];
-							spc.Read(gameNameChars, 0, lengthOfGameName);
 
-							XidGame = new string(gameNameChars);
-						}
 						break;
 					}
 
@@ -459,17 +448,11 @@ namespace GameMusicInfoReader
 					{
 						int lengthOfArtistName = spc.ReadInt16();
 
-						if (lengthOfArtistName < 1 || lengthOfArtistName > 0x100)
+						if (lengthOfArtistName >= 1 && lengthOfArtistName <= 0x100)
 						{
-							// Do nothing, invalid length.
+							XidArtist = new string(spc.ReadChars(lengthOfArtistName));
 						}
-						else
-						{
-							char[] artistNameChars = new char[lengthOfArtistName];
-							spc.Read(artistNameChars, 0, lengthOfArtistName);
 
-							XidArtist = new string(artistNameChars);
-						}
 						break;
 					}
 
@@ -477,17 +460,11 @@ namespace GameMusicInfoReader
 					{
 						int lengthOfDumperName = spc.ReadInt16();
 
-						if (lengthOfDumperName < 1 || lengthOfDumperName > 0x11)
+						if (lengthOfDumperName >= 1 && lengthOfDumperName <= 0x11)
 						{
-							// Do nothing, invalid length.
+							XidDumper = new string(spc.ReadChars(lengthOfDumperName));
 						}
-						else
-						{
-							char[] dumperNameChars = new char[lengthOfDumperName];
-							spc.Read(dumperNameChars, 0, lengthOfDumperName);
 
-							XidDumper = new string(dumperNameChars);
-						}
 						break;
 					}
 
@@ -509,17 +486,11 @@ namespace GameMusicInfoReader
 					{
 						int lengthOfComment = spc.ReadInt16();
 
-						if (lengthOfComment < 1 || lengthOfComment > 0x100)
+						if (lengthOfComment >= 1 && lengthOfComment <= 0x100)
 						{
-							// Do nothing, invalid comment.
+							XidComment = new string(spc.ReadChars(lengthOfComment));
 						}
-						else
-						{
-							char[] commentChars = new char[lengthOfComment];
-							spc.Read(commentChars, 0, lengthOfComment);
 
-							XidComment = new string(commentChars);
-						}
 						break;
 					}
 
@@ -527,17 +498,11 @@ namespace GameMusicInfoReader
 					{
 						int lengthOfOst = spc.ReadInt16();
 
-						if (lengthOfOst < 1 || lengthOfOst > 0x100)
+						if (lengthOfOst >= 1 && lengthOfOst <= 0x100)
 						{
-							// Do nothing, invalid OST title.
+							XidOstTitle = new string(spc.ReadChars(lengthOfOst));
 						}
-						else
-						{
-							char[] ostChars = new char[lengthOfOst];
-							spc.Read(ostChars, 0, lengthOfOst);
 
-							XidOstTitle = new string(ostChars);
-						}
 						break;
 					}
 
@@ -569,16 +534,11 @@ namespace GameMusicInfoReader
 					{
 						int publisherNameLength = spc.ReadInt16();
 
-						if (publisherNameLength < 1 || publisherNameLength > 0x100)
+						if (publisherNameLength >= 1 && publisherNameLength <= 0x100)
 						{
-							// Do nothing, invalid publisher name.
+							XidPublisher = new string(spc.ReadChars(publisherNameLength));
 						}
-						else
-						{
-							char[] publisherNameChars = new char[publisherNameLength];
-							spc.Read(publisherNameChars, 0, publisherNameLength);
-							XidPublisher = new string(publisherNameChars);
-						}
+
 						break;
 					}
 
@@ -653,8 +613,7 @@ namespace GameMusicInfoReader
 
 						if (loopTimes < 1)
 							loopTimes = 1;
-
-						if (loopTimes > 9)
+						else if (loopTimes > 9)
 							loopTimes = 9;
 
 						XidNumberOfTimesToLoop = loopTimes;
@@ -669,8 +628,7 @@ namespace GameMusicInfoReader
 
 						if (mixLevel < 32768)
 							mixLevel = 32768;
-
-						if (mixLevel > 524288)
+						else if (mixLevel > 524288)
 							mixLevel = 524288;
 
 						XidMixingLevel = mixLevel;
@@ -679,7 +637,6 @@ namespace GameMusicInfoReader
 						break;
 					}
 				}
-
 
 				xid6ChunkSize -= 4;
 			}
