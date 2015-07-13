@@ -64,6 +64,8 @@ namespace GameMusicInfoReader.Modules
 				// Defaults
 				DefaultTempo = xm.ReadUInt16();
 				DefaultBPM = xm.ReadUInt16();
+
+				PatternOrderTable = xm.ReadBytes(256);
 			}
 		}
 
@@ -72,7 +74,7 @@ namespace GameMusicInfoReader.Modules
 		#region Properties
 
 		/// <summary>
-		/// The header magic of the module file.
+		/// The header magic of this module file.
 		/// </summary>
 		public string HeaderID
 		{
@@ -81,7 +83,7 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// The name of the XM module
+		/// The name of this XM module
 		/// </summary>
 		public string ModuleName
 		{
@@ -90,7 +92,7 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// That name of the tracker the module was made in.
+		/// That name of the tracker this module was made in.
 		/// </summary>
 		public string ModuleTracker
 		{
@@ -117,7 +119,7 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// The totoal number of channels in the XM file.
+		/// The totoal number of channels in this XM file.
 		/// </summary>
 		/// <remarks>Max of 32 channels</remarks>
 		public int TotalChannels
@@ -127,7 +129,7 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// The total number of patterns in the XM file
+		/// The total number of patterns in this XM file
 		/// </summary>
 		/// <remarks>Max of 256 patterns</remarks>
 		public int TotalPatterns
@@ -137,7 +139,7 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// The total number of instruments in the XM file
+		/// The total number of instruments in this XM file
 		/// </summary>
 		/// <remarks>Maximum of 128 instruments</remarks>
 		public int TotalInstruments
@@ -159,7 +161,7 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// The default tempo of the XM file
+		/// The default tempo of this XM file
 		/// </summary>
 		public int DefaultTempo
 		{
@@ -168,9 +170,18 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// The default BPM for the XM module.
+		/// The default BPM for this XM module.
 		/// </summary>
 		public int DefaultBPM
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// The pattern order table for this module.
+		/// </summary>
+		public byte[] PatternOrderTable
 		{
 			get;
 			private set;
