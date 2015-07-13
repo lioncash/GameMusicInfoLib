@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 // TODO: Support multiline tags
@@ -20,7 +21,7 @@ namespace GameMusicInfoReader
 		/// <param name="path">Path to the PSF file</param>
 		public PsfReader(string path)
 		{
-			using (BinaryReader fs = new BinaryReader(File.OpenRead(path)))
+			using (var fs = new BinaryReader(File.OpenRead(path)))
 			{
 				// Header ID
 				HeaderID = new string(fs.ReadChars(3));
@@ -308,7 +309,7 @@ namespace GameMusicInfoReader
 		{
 			// Get the index of the indexOf tag so we know where to start
 			// within the file for getting the desired metadata.
-			int index = tag.IndexOf(indexOf);
+			int index = tag.IndexOf(indexOf, StringComparison.InvariantCulture);
 
 			// Error handling in case a tag isn't present in a file
 			if (index == -1)
