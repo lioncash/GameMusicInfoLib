@@ -16,22 +16,19 @@ namespace GameMusicInfoReader.Modules
 		/// <param name="path">The path to the MOD module.</param>
 		public ModReader(string path)
 		{
-			using (FileStream mod = File.OpenRead(path))
+			using (var mod = new BinaryReader(File.OpenRead(path)))
 			{
 				// Song title
-				byte[] songTitle = new byte[20];
-				mod.Read(songTitle, 0, songTitle.Length);
+				byte[] songTitle = mod.ReadBytes(20);
 				SongTitle = Encoding.UTF8.GetString(songTitle);
 
 				// Song length
-				mod.Seek(0x3B6, SeekOrigin.Begin);
+				mod.BaseStream.Seek(0x3B6, SeekOrigin.Begin);
 				SongLength = mod.ReadByte();
 
 				// Module ID
-				byte[] modId = new byte[4];
-				mod.Seek(0x438, SeekOrigin.Begin);
-				mod.Read(modId, 0, modId.Length);
-				ModuleID = Encoding.UTF8.GetString(modId);
+				mod.BaseStream.Seek(0x438, SeekOrigin.Begin);
+				ModuleID = Encoding.UTF8.GetString(mod.ReadBytes(4));
 			}
 		}
 
