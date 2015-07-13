@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 
 // TODO: Support multiline tags
@@ -230,7 +231,7 @@ namespace GameMusicInfoReader
 		/// Note that this provides the relative paths to the
 		/// xSF driver files, not the absolute path.
 		/// </remarks>
-		public List<string> ReferencedLibs
+		public ReadOnlyCollection<string> ReferencedLibs
 		{
 			get;
 			private set;
@@ -337,7 +338,7 @@ namespace GameMusicInfoReader
 
 		// Parses the metadata for "_lib[n]" (where [n] = positive num) tags
 		// Basically it retrieves the relative location of the xSF driver files.
-		private List<string> ParseIncludedLibs()
+		private ReadOnlyCollection<string> ParseIncludedLibs()
 		{
 			var res = new List<string>();
 
@@ -355,7 +356,7 @@ namespace GameMusicInfoReader
 				}
 			}
 
-			return res;
+			return new ReadOnlyCollection<string>(res);
 		}
 
 		#endregion
