@@ -10,6 +10,8 @@ namespace GameMusicInfoReader.Modules
 	{
 		// TODO: Patterns, Instrument chunk, Automation chunk, Drums
 
+		#region Constructor
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -53,12 +55,19 @@ namespace GameMusicInfoReader.Modules
 				TotalInstruments = mtt.ReadInt16();
 				TotalSamples = mtt.ReadInt16();
 
+				PatternOrders = GetPatternOrders(mtt);
+				DrumData = GetDrumData(mtt);
+
 				// Now get all of the chunks.
 				TrackInfo = new List<TrackData>();
 				Comments = new List<Message>();
 				EnumerateChunks(mtt);
 			}
 		}
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		/// The header identifier of this MT2 module.
@@ -88,7 +97,7 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// The title of the MT2 module file
+		/// The title of this MT2 module file
 		/// </summary>
 		public string Title
 		{
@@ -97,7 +106,7 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// The total number of position in the MT2 file
+		/// The total number of positions in this MT2 file
 		/// </summary>
 		public int TotalPositions
 		{
@@ -115,7 +124,7 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// The total number of patterns in the MT2 file
+		/// The total number of patterns in this MT2 file
 		/// </summary>
 		public int TotalPatterns
 		{
@@ -124,7 +133,7 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// The total number of tracks in the MT2 file
+		/// The total number of tracks in this MT2 file
 		/// </summary>
 		public int TotalTracks
 		{
@@ -196,7 +205,7 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// The total amount of instruments present in the MT2 file
+		/// The total amount of instruments present in this MT2 file
 		/// </summary>
 		public int TotalInstruments
 		{
@@ -205,7 +214,7 @@ namespace GameMusicInfoReader.Modules
 		}
 
 		/// <summary>
-		/// The number of samples present within the MT2 file
+		/// The number of samples present within this MT2 file
 		/// </summary>
 		public int TotalSamples
 		{
@@ -213,9 +222,23 @@ namespace GameMusicInfoReader.Modules
 			private set;
 		}
 
-		//-- Chunk Parsing --//
+		/// <summary>
+		/// Pattern orders for this MT2 module.
+		/// </summary>
+		public byte[] PatternOrders
+		{
+			get;
+			private set;
+		}
 
-		//- TRKS chunk -/
+		/// <summary>
+		/// Drum data within this MT2 module.
+		/// </summary>
+		public MT2DrumData DrumData
+		{
+			get;
+			private set;
+		}
 
 		/// <summary>
 		/// Track information for each track in this MT2 module.
@@ -248,14 +271,92 @@ namespace GameMusicInfoReader.Modules
 			private set;
 		}
 
+		#endregion
+
+		#region Pattern Order Retrieval
+
+		private static byte[] GetPatternOrders(BinaryReader reader)
+		{
+			byte[] orders = new byte[256];
+
+			for (int i = 0; i < orders.Length; i++)
+			{
+				orders[i] = reader.ReadByte();
+			}
+
+			return orders;
+		}
+
+		#endregion
+
+		#region Drum Data Retrieval
+
+		/// <summary>
+		/// MT2 Drum Data
+		/// </summary>
+		public sealed class MT2DrumData
+		{
+			/// <summary>
+			/// Number of drum patterns.
+			/// </summary>
+			public int NumPatterns { get; internal set; }
+
+			/// <summary>
+			/// Drum samples
+			/// </summary>
+			public short[] DrumSamples { get; internal set; }
+
+			/// <summary>
+			/// Drum orders
+			/// </summary>
+			public byte[] PatternOrders { get; internal set; }
+
+			/// <summary>
+			/// Whether or not any drum data exists.
+			/// </summary>
+			public bool IsEmpty { get; internal set; }
+
+			/// <summary>
+			/// Constructor
+			/// </summary>
+			public MT2DrumData()
+			{
+				DrumSamples = new short[8];
+				PatternOrders = new byte[256];
+			}
+		}
+
+		private static MT2DrumData GetDrumData(BinaryReader reader)
+		{
+			var drumData = new MT2DrumData();
+			var drumDataLength = reader.ReadInt16();
+
+			if (drumDataLength == 0)
+			{
+				drumData.IsEmpty = true;
+			}
+			else
+			{
+				drumData.IsEmpty = false;
+				drumData.NumPatterns = reader.ReadInt16();
+
+				for (int i = 0; i < drumData.DrumSamples.Length; i++)
+					drumData.DrumSamples[i] = reader.ReadInt16();
+
+				for (int i = 0; i < drumData.PatternOrders.Length; i++)
+					drumData.PatternOrders[i] = reader.ReadByte();
+			}
+
+			return drumData;
+		}
+
+		#endregion
+
+		#region Chunk Parsing
+
 		// Enumerates the chunk blocks in the module
 		private void EnumerateChunks(BinaryReader br)
 		{
-			// Grab the length of the drum data and skip over it.
-			br.BaseStream.Seek(382, SeekOrigin.Begin);
-			int drumDataLen = br.ReadInt16();
-			br.BaseStream.Position += drumDataLen;
-
 			// Get length of the chunk data.
 			int additionalDataLen = br.ReadInt32();
 
@@ -323,12 +424,14 @@ namespace GameMusicInfoReader.Modules
 			}
 		}
 
+		#endregion
+
 		#region Chunk Structures
 
 		/// <summary>
 		/// Track data chunk (TRKS)
 		/// </summary>
-		public struct TrackData
+		public sealed class TrackData
 		{
 			/// <summary>
 			/// Master volume for the track.
@@ -364,7 +467,7 @@ namespace GameMusicInfoReader.Modules
 		/// <summary>
 		/// Message chunk (MSG) for storing a comment.
 		/// </summary>
-		public struct Message
+		public sealed class Message
 		{
 			/// <summary>
 			/// Whether or not to display the message (can be ignored, doesn't matter).
@@ -380,7 +483,7 @@ namespace GameMusicInfoReader.Modules
 		/// <summary>
 		/// Summary (SUM) chunk
 		/// </summary>
-		public struct Summary
+		public sealed class Summary
 		{
 			/// <summary>
 			/// Build summary mask
