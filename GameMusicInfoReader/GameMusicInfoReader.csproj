@@ -48,6 +48,7 @@
     <Compile Include="Modules\It\KeyboardTablePair.cs" />
     <Compile Include="Modules\It\Sample.cs" />
     <Compile Include="Modules\Mod\ModReader.cs" />
+    <Compile Include="Modules\Mod\Sample.cs" />
     <Compile Include="Modules\Mt2\DrumData.cs" />
     <Compile Include="Modules\Mt2\Message.cs" />
     <Compile Include="Modules\Mt2\MT2Reader.cs" />

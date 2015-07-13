@@ -1,5 +1,7 @@
-﻿using System.IO;
+﻿using System.Collections.ObjectModel;
+using System.IO;
 using System.Text;
+using GameMusicInfoReader.Util;
 
 namespace GameMusicInfoReader.Modules.Mod
 {
@@ -18,14 +20,10 @@ namespace GameMusicInfoReader.Modules.Mod
 		/// <param name="path">The path to the MOD module.</param>
 		public ModReader(string path)
 		{
-			using (var mod = new BinaryReader(File.OpenRead(path)))
+			using (var mod = new EndianBinaryReader(File.OpenRead(path), Endian.Big))
 			{
-				// Song title
-				byte[] songTitle = mod.ReadBytes(20);
-				SongTitle = Encoding.UTF8.GetString(songTitle);
-
-				// Song length
-				mod.BaseStream.Seek(0x3B6, SeekOrigin.Begin);
+				SongTitle  = Encoding.UTF8.GetString(mod.ReadBytes(20));
+				Samples    = GetSamples(mod);
 				SongLength = mod.ReadByte();
 
 				// Module ID
@@ -39,7 +37,7 @@ namespace GameMusicInfoReader.Modules.Mod
 		#region Properties
 
 		/// <summary>
-		/// The song title of the MOD file
+		/// The song title of this MOD file
 		/// </summary>
 		public string SongTitle
 		{
@@ -48,7 +46,7 @@ namespace GameMusicInfoReader.Modules.Mod
 		}
 
 		/// <summary>
-		/// The song length in patterns for the MOD file
+		/// The song length in patterns for this MOD file
 		/// </summary>
 		public int SongLength
 		{
@@ -57,7 +55,7 @@ namespace GameMusicInfoReader.Modules.Mod
 		}
 
 		/// <summary>
-		/// The 4 character module ID for the MOD file
+		/// The 4 character module ID for this MOD file
 		/// </summary>
 		/// <remarks>
 		/// If module has ID's M.K., 8CHN, 4CHN, 6CHN, FLT4 or FLT8, then
@@ -67,6 +65,29 @@ namespace GameMusicInfoReader.Modules.Mod
 		{
 			get;
 			private set;
+		}
+
+		/// <summary>
+		/// Samples within this module.
+		/// </summary>
+		public ReadOnlyCollection<Sample> Samples
+		{
+			get;
+			private set;
+		}
+
+		#endregion
+
+		#region Helper Functions
+
+		private static ReadOnlyCollection<Sample> GetSamples(EndianBinaryReader reader)
+		{
+			var sampleArray = new Sample[31];
+
+			for (int i = 0; i < sampleArray.Length; i++)
+				sampleArray[i] = new Sample(reader);
+
+			return new ReadOnlyCollection<Sample>(sampleArray);
 		}
 
 		#endregion
