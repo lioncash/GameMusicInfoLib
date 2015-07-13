@@ -234,7 +234,7 @@ namespace GameMusicInfoReader.Modules.Mt2
 		/// <summary>
 		/// Drum data within this MT2 module.
 		/// </summary>
-		public MT2DrumData DrumData
+		public DrumData DrumData
 		{
 			get;
 			private set;
@@ -291,44 +291,9 @@ namespace GameMusicInfoReader.Modules.Mt2
 
 		#region Drum Data Retrieval
 
-		/// <summary>
-		/// MT2 Drum Data
-		/// </summary>
-		public sealed class MT2DrumData
+		private static DrumData GetDrumData(BinaryReader reader)
 		{
-			/// <summary>
-			/// Number of drum patterns.
-			/// </summary>
-			public int NumPatterns { get; internal set; }
-
-			/// <summary>
-			/// Drum samples
-			/// </summary>
-			public short[] DrumSamples { get; internal set; }
-
-			/// <summary>
-			/// Drum orders
-			/// </summary>
-			public byte[] PatternOrders { get; internal set; }
-
-			/// <summary>
-			/// Whether or not any drum data exists.
-			/// </summary>
-			public bool IsEmpty { get; internal set; }
-
-			/// <summary>
-			/// Constructor
-			/// </summary>
-			public MT2DrumData()
-			{
-				DrumSamples = new short[8];
-				PatternOrders = new byte[256];
-			}
-		}
-
-		private static MT2DrumData GetDrumData(BinaryReader reader)
-		{
-			var drumData = new MT2DrumData();
+			var drumData = new DrumData();
 			var drumDataLength = reader.ReadInt16();
 
 			if (drumDataLength == 0)
@@ -420,98 +385,6 @@ namespace GameMusicInfoReader.Modules.Mt2
 
 				// Decrement overall size, as we've processed a chunk.
 				additionalDataLen -= (size + 8); // +8 = taking into account the chunk ID and size identifiers.
-			}
-		}
-
-		#endregion
-
-		#region Chunk Structures
-
-		/// <summary>
-		/// Track data chunk (TRKS)
-		/// </summary>
-		public sealed class TrackData
-		{
-			/// <summary>
-			/// Master volume for the track.
-			/// </summary>
-			public int MasterVolume { get; internal set; }
-
-			/// <summary>
-			/// Track volume
-			/// </summary>
-			public int TrackVolume { get; internal set; }
-
-			/// <summary>
-			/// Whether or not an effect buffer is being used for the track.
-			/// </summary>
-			public bool UsingEffectBuffer { get; internal set; }
-
-			/// <summary>
-			/// Whether or not this track is outputted.
-			/// <para>false = Self</para>
-			/// <para>true = Output track</para>
-			/// </summary>
-			public bool OutputTrack { get; internal set; }
-
-			/// <summary>
-			/// The effect ID for this track.
-			/// </summary>
-			public int EffectID { get; internal set; }
-
-			/// <summary>
-			/// Track parameters
-			/// </summary>
-			public short[] Parameters { get; internal set; }
-
-			/// <summary>
-			/// Constructor
-			/// </summary>
-			public TrackData()
-			{
-				Parameters = new short[8];
-			}
-		}
-
-		/// <summary>
-		/// Message chunk (MSG) for storing a comment.
-		/// </summary>
-		public sealed class Message
-		{
-			/// <summary>
-			/// Whether or not to display the message (can be ignored, doesn't matter).
-			/// </summary>
-			public bool ShowComment { get; internal set; }
-
-			/// <summary>
-			/// The actual comment.
-			/// </summary>
-			public string Comment { get; internal set; }
-
-			public override string ToString()
-			{
-				return Comment;
-			}
-		}
-
-		/// <summary>
-		/// Summary (SUM) chunk
-		/// </summary>
-		public sealed class Summary
-		{
-			/// <summary>
-			/// Build summary mask
-			/// </summary>
-			public long SummaryMask { get; internal set; }
-
-			/// <summary>
-			/// Build summary content.
-			/// </summary>
-			public string Content { get; internal set; }
-
-			public override string ToString()
-			{
-				return Content;
 			}
 		}
 

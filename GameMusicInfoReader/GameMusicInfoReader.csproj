@@ -48,7 +48,11 @@
     <Compile Include="Modules\It\KeyboardTablePair.cs" />
     <Compile Include="Modules\It\Sample.cs" />
     <Compile Include="Modules\Mod\ModReader.cs" />
+    <Compile Include="Modules\Mt2\DrumData.cs" />
+    <Compile Include="Modules\Mt2\Message.cs" />
     <Compile Include="Modules\Mt2\MT2Reader.cs" />
+    <Compile Include="Modules\Mt2\Summary.cs" />
+    <Compile Include="Modules\Mt2\TrackData.cs" />
     <Compile Include="Modules\Plm\PlmReader.cs" />
     <Compile Include="Modules\Ptm\PtmReader.cs" />
     <Compile Include="Modules\S3m\S3MReader.cs" />
