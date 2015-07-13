@@ -377,14 +377,13 @@ namespace GameMusicInfoReader.Modules
 						data.UsingEffectBuffer = br.ReadBoolean();
 						data.OutputTrack       = br.ReadBoolean();
 						data.EffectID          = br.ReadInt16();
-						// NOTE: After effect ID are eight 16-bit ints. These are track params.
-						// We don't read these because they aren't needed.
+
+						for (int i = 0; i < data.Parameters.Length; i++)
+							data.Parameters[i] = br.ReadInt16();
 
 						// Add to the list of track data
 						TrackInfo.Add(data);
 
-						// Skip track params
-						br.BaseStream.Position += 16;
 						// Skip rest of track data
 						br.BaseStream.Position += (size - 24); // -24 = taking into account the above read vars.
 						break;
@@ -460,8 +459,18 @@ namespace GameMusicInfoReader.Modules
 			/// </summary>
 			public int EffectID { get; internal set; }
 
-			// NOTE: Technically after the ID is 8 words of individual track params.
-			//       ie. Each param = 2 bytes.
+			/// <summary>
+			/// Track parameters;
+			/// </summary>
+			public short[] Parameters { get; internal set; }
+
+			/// <summary>
+			/// Constructor
+			/// </summary>
+			public TrackData()
+			{
+				Parameters = new short[8];
+			}
 		}
 
 		/// <summary>
