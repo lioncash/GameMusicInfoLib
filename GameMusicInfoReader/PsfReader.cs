@@ -309,7 +309,7 @@ namespace GameMusicInfoReader
 		{
 			// Get the index of the indexOf tag so we know where to start
 			// within the file for getting the desired metadata.
-			int index = tag.IndexOf(indexOf, StringComparison.InvariantCulture);
+			int index = tag.IndexOf(indexOf, StringComparison.Ordinal);
 
 			// Error handling in case a tag isn't present in a file
 			if (index == -1)
