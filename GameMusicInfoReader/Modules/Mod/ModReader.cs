@@ -1,5 +1,7 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Text;
 using GameMusicInfoReader.Util;
 
@@ -26,8 +28,11 @@ namespace GameMusicInfoReader.Modules.Mod
 				Samples    = GetSamples(mod);
 				SongLength = mod.ReadByte();
 
-				// Module ID
-				mod.BaseStream.Seek(0x438, SeekOrigin.Begin);
+				// Skip byte. Unimportant
+				mod.BaseStream.Position += 1;
+
+				SongPositions = GetSongPositions(mod);
+				NumPatterns = SongPositions.Max();
 				ModuleID = Encoding.UTF8.GetString(mod.ReadBytes(4));
 			}
 		}
@@ -76,6 +81,33 @@ namespace GameMusicInfoReader.Modules.Mod
 			private set;
 		}
 
+		/// <summary>
+		/// Song positions.
+		/// </summary>
+		/// <remarks>
+		/// Each hold a number from 0-63 (or 0-127)
+		/// that tell the tracker what pattern to play
+		/// at that position.
+		/// </remarks>
+		public ReadOnlyCollection<byte> SongPositions
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Number of patterns within this module.
+		/// </summary>
+		/// <remarks>
+		/// This is found by reading through the song
+		/// positions and getting the largest number within it.
+		/// </remarks>
+		public int NumPatterns
+		{
+			get;
+			private set;
+		}
+
 		#endregion
 
 		#region Helper Functions
@@ -88,6 +120,16 @@ namespace GameMusicInfoReader.Modules.Mod
 				sampleArray[i] = new Sample(reader);
 
 			return new ReadOnlyCollection<Sample>(sampleArray);
+		}
+
+		private static ReadOnlyCollection<byte> GetSongPositions(EndianBinaryReader reader)
+		{
+			var positionArray = new byte[128];
+
+			for (int i = 0; i < positionArray.Length; i++)
+				positionArray[i] = reader.ReadByte();
+
+			return new ReadOnlyCollection<byte>(positionArray);
 		}
 
 		#endregion
