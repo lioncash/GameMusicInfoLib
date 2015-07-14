@@ -32,8 +32,10 @@ namespace GameMusicInfoReader.Modules.Mod
 				mod.BaseStream.Position += 1;
 
 				SongPositions = GetSongPositions(mod);
-				NumPatterns = SongPositions.Max();
 				ModuleID = Encoding.UTF8.GetString(mod.ReadBytes(4));
+
+				// Number of patterns is equal to the largest value in the position table.
+				Patterns = GetPatterns(mod, SongPositions.Max());
 			}
 		}
 
@@ -96,13 +98,9 @@ namespace GameMusicInfoReader.Modules.Mod
 		}
 
 		/// <summary>
-		/// Number of patterns within this module.
+		/// Pattern data within this module.
 		/// </summary>
-		/// <remarks>
-		/// This is found by reading through the song
-		/// positions and getting the largest number within it.
-		/// </remarks>
-		public int NumPatterns
+		public ReadOnlyCollection<Pattern> Patterns
 		{
 			get;
 			private set;
@@ -130,6 +128,19 @@ namespace GameMusicInfoReader.Modules.Mod
 				positionArray[i] = reader.ReadByte();
 
 			return new ReadOnlyCollection<byte>(positionArray);
+		}
+
+		private static ReadOnlyCollection<Pattern> GetPatterns(EndianBinaryReader reader, int numPatterns)
+		{
+			if (numPatterns < 0)
+				throw new ArgumentException("numPatterns cannot be negative.", "numPatterns");
+
+			var patternArray = new Pattern[numPatterns];
+
+			for (int i = 0; i < patternArray.Length; i++)
+				patternArray[i] = new Pattern(reader);
+
+			return new ReadOnlyCollection<Pattern>(patternArray);
 		}
 
 		#endregion

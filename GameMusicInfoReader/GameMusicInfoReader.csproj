@@ -47,7 +47,11 @@
     <Compile Include="Modules\It\ITReader.cs" />
     <Compile Include="Modules\It\KeyboardTablePair.cs" />
     <Compile Include="Modules\It\Sample.cs" />
+    <Compile Include="Modules\Mod\EffectCommand.cs" />
+    <Compile Include="Modules\Mod\EffectCommandType.cs" />
     <Compile Include="Modules\Mod\ModReader.cs" />
+    <Compile Include="Modules\Mod\Note.cs" />
+    <Compile Include="Modules\Mod\Pattern.cs" />
     <Compile Include="Modules\Mod\Sample.cs" />
     <Compile Include="Modules\Mt2\DrumData.cs" />
     <Compile Include="Modules\Mt2\Message.cs" />
