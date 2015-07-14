@@ -9,6 +9,33 @@ namespace GameMusicInfoReader.Modules.Mod
 	/// </summary>
 	public sealed class Sample
 	{
+		#region Constructor
+
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="reader">Reader to retrieve sample data with.</param>
+		/// <exception cref="ArgumentNullException">If the given reader is null.</exception>
+		public Sample(EndianBinaryReader reader)
+		{
+			if (reader == null)
+				throw new ArgumentNullException("reader");
+
+			SampleName = new string(reader.ReadChars(22));
+			SampleLengthInWords = reader.ReadUInt16();
+			SampleLengthInBytes = SampleLengthInWords * 2;
+			FineTuneValue       = (reader.ReadSByte() & 0xF);
+			Volume              = reader.ReadByte();
+			RepeatPointInWords  = reader.ReadUInt16();
+			RepeatPointInBytes  = RepeatLengthInWords * 2;
+			RepeatLengthInWords = reader.ReadInt16();
+			RepeatLengthInBytes = RepeatLengthInWords * 2;
+		}
+
+		#endregion
+
+		#region Properties
+
 		/// <summary>
 		/// Internal name for this Sample.
 		/// </summary>
@@ -54,30 +81,15 @@ namespace GameMusicInfoReader.Modules.Mod
 		/// </summary>
 		public int RepeatLengthInBytes { get; private set; }
 
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		/// <param name="reader">Reader to retrieve sample data with.</param>
-		/// <exception cref="ArgumentNullException">If the given reader is null.</exception>
-		public Sample(EndianBinaryReader reader)
-		{
-			if (reader == null)
-				throw new ArgumentNullException("reader");
+		#endregion
 
-			SampleName = new string(reader.ReadChars(22));
-			SampleLengthInWords = reader.ReadUInt16();
-			SampleLengthInBytes = SampleLengthInWords * 2;
-			FineTuneValue       = (reader.ReadSByte() & 0xF);
-			Volume              = reader.ReadByte();
-			RepeatPointInWords  = reader.ReadUInt16();
-			RepeatPointInBytes  = RepeatLengthInWords * 2;
-			RepeatLengthInWords = reader.ReadInt16();
-			RepeatLengthInBytes = RepeatLengthInWords * 2;
-		}
+		#region Methods
 
 		public override string ToString()
 		{
 			return SampleName;
 		}
+
+		#endregion
 	}
 }
