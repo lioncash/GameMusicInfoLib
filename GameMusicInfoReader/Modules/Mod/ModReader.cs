@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
-using GameMusicInfoReader.Util;
+using GameMusicInfoReader.Util.Endian;
 
 namespace GameMusicInfoReader.Modules.Mod
 {

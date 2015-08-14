@@ -1,4 +1,4 @@
-﻿namespace GameMusicInfoReader.Util
+﻿namespace GameMusicInfoReader.Util.Endian
 {
 	public static class EndianUtils
 	{

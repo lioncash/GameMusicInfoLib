@@ -6,7 +6,7 @@ using System.Text;
 // TODO: ReadDecimal method equivalent.
 // How do you even go about flipping the endianness on this type?
 
-namespace GameMusicInfoReader.Util
+namespace GameMusicInfoReader.Util.Endian
 {
 	/// <summary>
 	/// <see cref="BinaryReader"/> implementation that can read in different <see cref="Endian"/> formats.

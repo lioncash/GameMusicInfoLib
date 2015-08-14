@@ -1,4 +1,4 @@
-﻿namespace GameMusicInfoReader.Util
+﻿namespace GameMusicInfoReader.Util.Endian
 {
 	/// <summary>
 	/// Defines endian representations.

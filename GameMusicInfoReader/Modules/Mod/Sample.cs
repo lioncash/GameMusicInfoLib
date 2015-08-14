@@ -1,5 +1,5 @@
 ﻿using System;
-using GameMusicInfoReader.Util;
+using GameMusicInfoReader.Util.Endian;
 
 namespace GameMusicInfoReader.Modules.Mod
 {

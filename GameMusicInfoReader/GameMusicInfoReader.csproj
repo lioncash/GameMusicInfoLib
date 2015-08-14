@@ -71,9 +71,9 @@
     <Compile Include="SidReader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SpcReader.cs" />
-    <Compile Include="Util\Endian.cs" />
-    <Compile Include="Util\EndianBinaryReader.cs" />
-    <Compile Include="Util\EndianUtils.cs" />
+    <Compile Include="Util\Endian\Endian.cs" />
+    <Compile Include="Util\Endian\EndianBinaryReader.cs" />
+    <Compile Include="Util\Endian\EndianUtils.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
