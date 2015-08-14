@@ -37,7 +37,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GbsReader.cs" />
+    <Compile Include="Formats\Gbs\GbsReader.cs" />
     <Compile Include="Modules\Amd\AmdReader.cs" />
     <Compile Include="Modules\Ams\AmsReader.cs" />
     <Compile Include="Modules\Dbm\DbmReader.cs" />
@@ -65,16 +65,17 @@
     <Compile Include="Modules\Stm\StmReader.cs" />
     <Compile Include="Modules\Xm\FrequencyTableType.cs" />
     <Compile Include="Modules\Xm\XMReader.cs" />
-    <Compile Include="NsfReader.cs" />
-    <Compile Include="PsfReader.cs" />
-    <Compile Include="SapReader.cs" />
-    <Compile Include="SidReader.cs" />
+    <Compile Include="Formats\Nsf\NsfReader.cs" />
+    <Compile Include="Formats\Psf\PsfReader.cs" />
+    <Compile Include="Formats\Sap\SapReader.cs" />
+    <Compile Include="Formats\Sid\SidReader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SpcReader.cs" />
+    <Compile Include="Formats\Spc\SpcReader.cs" />
     <Compile Include="Util\Endian\Endian.cs" />
     <Compile Include="Util\Endian\EndianBinaryReader.cs" />
     <Compile Include="Util\Endian\EndianUtils.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

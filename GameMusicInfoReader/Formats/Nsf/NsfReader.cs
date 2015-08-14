@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace GameMusicInfoReader
+namespace GameMusicInfoReader.Formats.Nsf
 {
 	/// <summary>
 	/// Reader for Nintendo NSF Files

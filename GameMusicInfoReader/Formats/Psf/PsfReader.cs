@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 
 // TODO: Support multiline tags
-namespace GameMusicInfoReader
+namespace GameMusicInfoReader.Formats.Psf
 {
 	/// <summary>
 	/// A class for reading files that are based off of the Playstation PSF format.

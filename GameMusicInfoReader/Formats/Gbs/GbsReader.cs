@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace GameMusicInfoReader
+namespace GameMusicInfoReader.Formats.Gbs
 {
 	/// <summary>
 	/// A reader for getting info out of Gameboy GBS files.

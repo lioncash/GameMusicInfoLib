@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace GameMusicInfoReader
+namespace GameMusicInfoReader.Formats.Spc
 {
 	/// <summary>
 	/// A reader for Super Nintendo SPC files.

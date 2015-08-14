@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-namespace GameMusicInfoReader
+namespace GameMusicInfoReader.Formats.Sap
 {
 	/// <summary>
 	/// Reader for Atari SAP files

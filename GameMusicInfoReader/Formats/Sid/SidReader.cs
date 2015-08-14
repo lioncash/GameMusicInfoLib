@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using GameMusicInfoReader.Util.Endian;
 
-namespace GameMusicInfoReader
+namespace GameMusicInfoReader.Formats.Sid
 {
 	/// <summary>
 	/// A reader for Commodore 64 SID files (assumes V2+).
